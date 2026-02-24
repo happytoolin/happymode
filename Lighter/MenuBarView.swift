@@ -1,5 +1,4 @@
 import AppKit
-import Charts
 import SwiftUI
 
 struct MenuBarView: View {
@@ -8,9 +7,7 @@ struct MenuBarView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label(controller.targetIsDarkMode ? "Dark mode active" : "Light mode active",
-                  systemImage: controller.targetIsDarkMode ? "moon.fill" : "sun.max.fill")
-                .font(.headline)
+            header
 
             Picker("Appearance", selection: $controller.appearancePreference) {
                 ForEach(AppearancePreference.allCases) { preference in
@@ -19,14 +16,16 @@ struct MenuBarView: View {
             }
             .pickerStyle(.segmented)
 
-            WeeklySunGraphView(days: controller.weeklySolarDays)
-
-            HStack(spacing: 16) {
-                Label(controller.currentSunriseText, systemImage: "sunrise.fill")
-                Label(controller.currentSunsetText, systemImage: "sunset.fill")
+            if controller.setupNeeded {
+                setupBanner
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
+
+            WeeklyDaylightTimelineView(days: controller.weeklySolarDays)
+
+            HStack(spacing: 10) {
+                metricChip(title: "Sunrise", value: controller.currentSunriseText, systemImage: "sunrise.fill")
+                metricChip(title: "Sunset", value: controller.currentSunsetText, systemImage: "sunset.fill")
+            }
 
             Text(controller.nextTransitionText)
                 .font(.caption)
@@ -35,6 +34,7 @@ struct MenuBarView: View {
             Text(controller.locationStatusText)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .lineLimit(2)
 
             if let errorText = controller.errorText {
                 Text(errorText)
@@ -44,161 +44,226 @@ struct MenuBarView: View {
 
             Divider()
 
-            Button("Options...") {
+            HStack(spacing: 10) {
+                Button("Options...") {
+                    NSApp.activate(ignoringOtherApps: true)
+                    openSettings()
+                }
+
+                Button("Quit") {
+                    NSApplication.shared.terminate(nil)
+                }
+            }
+        }
+        .padding(14)
+        .frame(width: 380)
+    }
+
+    private var header: some View {
+        HStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: controller.targetIsDarkMode
+                                ? [Color(red: 0.27, green: 0.35, blue: 0.58), Color(red: 0.12, green: 0.16, blue: 0.30)]
+                                : [Color(red: 1.00, green: 0.82, blue: 0.20), Color(red: 0.97, green: 0.56, blue: 0.20)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 24, height: 24)
+
+                Image(systemName: controller.targetIsDarkMode ? "moon.fill" : "sun.max.fill")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(controller.targetIsDarkMode ? "Dark mode active" : "Light mode active")
+                    .font(.headline)
+                Text(controller.setupStatusText)
+                    .font(.caption)
+                    .foregroundStyle(controller.setupNeeded ? .orange : .secondary)
+            }
+
+            Spacer()
+        }
+    }
+
+    private var setupBanner: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Finish setup")
+                    .font(.subheadline.weight(.semibold))
+                Text(controller.setupGuidanceText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer()
+
+            Button("Open") {
                 NSApp.activate(ignoringOtherApps: true)
                 openSettings()
             }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.small)
+        }
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.orange.opacity(0.12))
+        )
+    }
 
-            Button("Quit Lighter") {
-                NSApplication.shared.terminate(nil)
+    private func metricChip(title: String, value: String, systemImage: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: systemImage)
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+
+            VStack(alignment: .leading, spacing: 0) {
+                Text(title)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Text(value)
+                    .font(.caption.weight(.semibold))
             }
         }
-        .padding(12)
-        .frame(width: 360)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 9)
+                .fill(Color.secondary.opacity(0.10))
+        )
     }
 }
 
-private struct WeeklySunGraphView: View {
+private struct WeeklyDaylightTimelineView: View {
     let days: [WeeklySolarDay]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("7-Day Sunlight Forecast")
+        VStack(alignment: .leading, spacing: 8) {
+            Text("7-Day Daylight")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
 
-            if days.isEmpty {
+            VStack(spacing: 7) {
+                if days.isEmpty {
+                    Text("Waiting for location")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, minHeight: 100)
+                } else {
+                    ForEach(days) { day in
+                        DaylightTrackRow(day: day)
+                    }
+                }
+            }
+            .padding(10)
+            .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(
                         LinearGradient(
-                            colors: [Color(red: 0.10, green: 0.15, blue: 0.24), Color(red: 0.19, green: 0.31, blue: 0.49)],
-                            startPoint: .top,
-                            endPoint: .bottom
+                            colors: [Color(red: 0.07, green: 0.13, blue: 0.26), Color(red: 0.15, green: 0.26, blue: 0.45)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
                     )
-                    .frame(height: 168)
-                    .overlay {
-                        Text("Waiting for location")
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.75))
-                    }
-            } else {
-                Chart {
-                    ForEach(days) { day in
-                        let label = shortWeekday(day.date)
+            )
+        }
+    }
+}
 
-                        switch day.kind {
-                        case .normal(let sunrise, let sunset):
-                            BarMark(
-                                x: .value("Day", label),
-                                yStart: .value("Sunrise", hourValue(sunrise)),
-                                yEnd: .value("Sunset", hourValue(sunset)),
-                                width: 16
-                            )
-                            .foregroundStyle(
+private struct DaylightTrackRow: View {
+    let day: WeeklySolarDay
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(day.date.formatted(.dateTime.weekday(.abbreviated)))
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.white.opacity(0.9))
+                .frame(width: 28, alignment: .leading)
+
+            GeometryReader { proxy in
+                let width = proxy.size.width
+
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.black.opacity(0.32))
+                        .frame(height: 14)
+
+                    switch day.kind {
+                    case .normal(let sunrise, let sunset):
+                        let start = max(0, min(1, hourValue(sunrise) / 24))
+                        let end = max(0, min(1, hourValue(sunset) / 24))
+                        let daylightWidth = max((end - start) * width, 2)
+
+                        Capsule()
+                            .fill(
                                 LinearGradient(
-                                    colors: [Color.yellow.opacity(0.95), Color.orange.opacity(0.95)],
-                                    startPoint: .top,
-                                    endPoint: .bottom
+                                    colors: [Color(red: 1.00, green: 0.88, blue: 0.26), Color(red: 0.98, green: 0.57, blue: 0.19)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
                                 )
                             )
+                            .frame(width: daylightWidth, height: 14)
+                            .offset(x: start * width)
 
-                            LineMark(
-                                x: .value("Day", label),
-                                y: .value("Sunrise Line", hourValue(sunrise))
+                    case .alwaysLight:
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(red: 1.00, green: 0.90, blue: 0.45), Color(red: 1.00, green: 0.73, blue: 0.33)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
                             )
-                            .foregroundStyle(Color.yellow.opacity(0.9))
-                            .interpolationMethod(.catmullRom)
+                            .frame(height: 14)
 
-                            LineMark(
-                                x: .value("Day", label),
-                                y: .value("Sunset Line", hourValue(sunset))
-                            )
-                            .foregroundStyle(Color.orange.opacity(0.9))
-                            .interpolationMethod(.catmullRom)
-
-                        case .alwaysLight:
-                            BarMark(
-                                x: .value("Day", label),
-                                yStart: .value("Always Light Start", 0.0),
-                                yEnd: .value("Always Light End", 24.0),
-                                width: 16
-                            )
-                            .foregroundStyle(Color.yellow.opacity(0.55))
-
-                        case .alwaysDark:
-                            BarMark(
-                                x: .value("Day", label),
-                                yStart: .value("Always Dark Start", 11.5),
-                                yEnd: .value("Always Dark End", 12.5),
-                                width: 16
-                            )
-                            .foregroundStyle(Color.indigo.opacity(0.65))
-                        }
+                    case .alwaysDark:
+                        Image(systemName: "moon.stars.fill")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.75))
+                            .padding(.leading, 4)
                     }
                 }
-                .chartLegend(.hidden)
-                .chartYScale(domain: 0 ... 24)
-                .chartXAxis {
-                    AxisMarks { _ in
-                        AxisValueLabel()
-                    }
-                }
-                .chartYAxis {
-                    AxisMarks(values: [0, 6, 12, 18, 24]) { value in
-                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.6, dash: [2, 3]))
-                            .foregroundStyle(.white.opacity(0.25))
-                        AxisTick()
-                            .foregroundStyle(.white.opacity(0.6))
-                        AxisValueLabel {
-                            if let hour = value.as(Double.self) {
-                                Text(hourLabel(hour))
-                                    .foregroundStyle(.white.opacity(0.85))
-                            }
-                        }
-                    }
-                }
-                .chartPlotStyle { plot in
-                    plot
-                        .background(
-                            LinearGradient(
-                                colors: [Color(red: 0.10, green: 0.15, blue: 0.24), Color(red: 0.19, green: 0.31, blue: 0.49)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-                .frame(height: 168)
             }
+            .frame(height: 14)
+
+            Text(daySummary(day))
+                .font(.caption2)
+                .foregroundStyle(.white.opacity(0.75))
+                .frame(width: 90, alignment: .trailing)
         }
+        .frame(height: 16)
     }
 
     private func hourValue(_ date: Date) -> Double {
         let components = Calendar.current.dateComponents([.hour, .minute], from: date)
-        let hour = Double(components.hour ?? 0)
-        let minute = Double(components.minute ?? 0)
-        return hour + (minute / 60)
+        return Double(components.hour ?? 0) + (Double(components.minute ?? 0) / 60)
     }
 
-    private func shortWeekday(_ date: Date) -> String {
-        date.formatted(.dateTime.weekday(.abbreviated))
-    }
-
-    private func hourLabel(_ value: Double) -> String {
-        switch Int(value.rounded()) {
-        case 0:
-            return "12a"
-        case 6:
-            return "6a"
-        case 12:
-            return "12p"
-        case 18:
-            return "6p"
-        case 24:
-            return "12a"
-        default:
-            return ""
+    private func daySummary(_ day: WeeklySolarDay) -> String {
+        switch day.kind {
+        case .normal(let sunrise, let sunset):
+            return "\(shortTime(sunrise)) - \(shortTime(sunset))"
+        case .alwaysLight:
+            return "All day"
+        case .alwaysDark:
+            return "No sun"
         }
+    }
+
+    private func shortTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        formatter.dateStyle = .none
+        return formatter.string(from: date)
     }
 }
