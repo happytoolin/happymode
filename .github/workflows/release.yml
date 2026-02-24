@@ -70,12 +70,16 @@ jobs:
             dist/${{ env.APP_NAME }}-v${{ env.VERSION }}.sha256
             dist/${{ env.APP_NAME }}-latest.zip
 
-      - name: Update Homebrew tap cask
-        if: ${{ secrets.TAP_GITHUB_TOKEN != '' }}
+      - name: Update Homebrew tap cask (optional)
         env:
           TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+
+          if [ -z "${TAP_GITHUB_TOKEN:-}" ]; then
+            echo "TAP_GITHUB_TOKEN is not set; skipping tap update."
+            exit 0
+          fi
 
           TAP_DIR="$(mktemp -d)"
           git clone "https://x-access-token:${TAP_GITHUB_TOKEN}@github.com/${TAP_REPO}.git" "$TAP_DIR"
@@ -96,7 +100,3 @@ jobs:
           git add Casks/happymode.rb
           git commit -m "happymode ${VERSION}"
           git push origin main
-
-      - name: Skip tap update (missing token)
-        if: ${{ secrets.TAP_GITHUB_TOKEN == '' }}
-        run: echo "TAP_GITHUB_TOKEN is not set; skipped updating happytoolin/happytap."
