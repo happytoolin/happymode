@@ -515,7 +515,7 @@ final class ThemeController: NSObject, ObservableObject {
     }
 
     func openAppSettings() {
-        NotificationCenter.default.post(name: .happymodeOpenSettingsRequested, object: nil)
+        NotificationCenter.default.post(name: Notification.Name("happymodeOpenSettingsRequested"), object: nil)
     }
 
     func fillManualCoordinatesFromDetected() {

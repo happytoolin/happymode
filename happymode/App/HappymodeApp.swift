@@ -2,10 +2,6 @@ import AppKit
 import Combine
 import SwiftUI
 
-extension Notification.Name {
-    static let happymodeOpenSettingsRequested = Notification.Name("happymodeOpenSettingsRequested")
-}
-
 @main
 struct HappymodeApp: App {
     @StateObject private var controller: ThemeController
@@ -79,7 +75,7 @@ final class StatusBarController: NSObject {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleOpenSettingsRequest),
-            name: .happymodeOpenSettingsRequested,
+            name: Notification.Name("happymodeOpenSettingsRequested"),
             object: nil
         )
     }
