@@ -98,6 +98,36 @@ xcodebuild -project happymode.xcodeproj -scheme happymode -configuration Debug -
 xcodebuild -project happymode.xcodeproj -scheme happymode -configuration Release -sdk macosx build
 ```
 
+## CI/CD
+
+GitHub Actions workflows are included:
+
+- `CI` (`.github/workflows/ci.yml`): builds on every pull request and on pushes to `main`.
+- `Release` (`.github/workflows/release.yml`): runs when a tag like `v1.2.3` is pushed, builds a release artifact, publishes a GitHub Release, and updates the Homebrew tap cask.
+
+### Release flow
+
+1. Push changes to `main`.
+2. Create and push a version tag:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+3. GitHub Actions will publish:
+   - `happymode-v1.0.0.zip`
+   - `happymode-v1.0.0.sha256`
+   - `happymode-latest.zip`
+
+### Required secret for tap updates
+
+Set this repository secret in GitHub:
+
+- `TAP_GITHUB_TOKEN`: a token with write access to `happytoolin/happytap`.
+
+If the secret is missing, release still succeeds, but tap update is skipped.
+
 ## Troubleshooting
 
 - App does not switch appearance:

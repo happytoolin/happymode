@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: macos-latest
+    env:
+      APP_NAME: happymode
+      TAP_REPO: happytoolin/happytap
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use latest stable Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build release app
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project happymode.xcodeproj \
+            -scheme happymode \
+            -configuration Release \
+            -sdk macosx \
+            CODE_SIGNING_ALLOWED=NO \
+            SYMROOT="$PWD/build" \
+            clean build
+
+      - name: Package release artifact
+        run: |
+          set -euo pipefail
+
+          VERSION="${GITHUB_REF_NAME#v}"
+          APP_PATH="build/Release/${APP_NAME}.app"
+          VERSIONED_ZIP="dist/${APP_NAME}-v${VERSION}.zip"
+          LATEST_ZIP="dist/${APP_NAME}-latest.zip"
+          SHA_FILE="dist/${APP_NAME}-v${VERSION}.sha256"
+
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Expected app not found at $APP_PATH"
+            exit 1
+          fi
+
+          mkdir -p dist
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$VERSIONED_ZIP"
+          cp "$VERSIONED_ZIP" "$LATEST_ZIP"
+
+          SHA256="$(shasum -a 256 "$VERSIONED_ZIP" | awk '{print $1}')"
+          printf "%s  %s\n" "$SHA256" "$(basename "$VERSIONED_ZIP")" > "$SHA_FILE"
+
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "SHA256=$SHA256" >> "$GITHUB_ENV"
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/${{ env.APP_NAME }}-v${{ env.VERSION }}.zip
+            dist/${{ env.APP_NAME }}-v${{ env.VERSION }}.sha256
+            dist/${{ env.APP_NAME }}-latest.zip
+
+      - name: Update Homebrew tap cask
+        if: ${{ secrets.TAP_GITHUB_TOKEN != '' }}
+        env:
+          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          TAP_DIR="$(mktemp -d)"
+          git clone "https://x-access-token:${TAP_GITHUB_TOKEN}@github.com/${TAP_REPO}.git" "$TAP_DIR"
+
+          mkdir -p "$TAP_DIR/Casks"
+
+          scripts/render_tap_cask.sh "$VERSION" "$SHA256" "$GITHUB_REPOSITORY" > "$TAP_DIR/Casks/happymode.rb"
+
+          cd "$TAP_DIR"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet; then
+            echo "No tap changes to commit."
+            exit 0
+          fi
+
+          git add Casks/happymode.rb
+          git commit -m "happymode ${VERSION}"
+          git push origin main
+
+      - name: Skip tap update (missing token)
+        if: ${{ secrets.TAP_GITHUB_TOKEN == '' }}
+        run: echo "TAP_GITHUB_TOKEN is not set; skipped updating happytoolin/happytap."
