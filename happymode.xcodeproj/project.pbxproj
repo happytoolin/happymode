@@ -7,36 +7,36 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0287722DE211E09938FC198F /* ThemeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2A4DDCAF699250D5EF6012D /* ThemeController.swift */; };
-		2AF7C7AB3D7B7484E90E4BE3 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CFBF5AC0ED953AF3BBB168C1 /* Cocoa.framework */; };
-		39282ECC26B57104EA10FA07 /* SolarCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E24B77649F24352D1540B80 /* SolarCalculator.swift */; };
-		432B7EEC6E4E024BF6E00BF1 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05DF75CBE1DB50C10F66E6AC /* MenuBarView.swift */; };
-			5D5FA8F017267C5A5A4E8F91 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64CA2B496F1DB06899315924 /* SettingsView.swift */; };
-			80E107762F6C668AEB00D896 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 58CBF4DB865C20A8A7F54B1F /* Assets.xcassets */; };
-			A1AD099E16F3B4B7828CC2DA /* LighterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4641BF3033696CA87BECCD7A /* LighterApp.swift */; };
-			C371AFF7980EE79E40AAE749 /* SwiftUICharts in Frameworks */ = {isa = PBXBuildFile; productRef = B042AB69F81858DAEC84AA1C /* SwiftUICharts */; };
+			0287722DE211E09938FC198F /* ThemeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2A4DDCAF699250D5EF6012D /* ThemeController.swift */; };
+			2AF7C7AB3D7B7484E90E4BE3 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CFBF5AC0ED953AF3BBB168C1 /* Cocoa.framework */; };
+			39282ECC26B57104EA10FA07 /* SolarCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E24B77649F24352D1540B80 /* SolarCalculator.swift */; };
+			432B7EEC6E4E024BF6E00BF1 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05DF75CBE1DB50C10F66E6AC /* MenuBarView.swift */; };
+				5D5FA8F017267C5A5A4E8F91 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64CA2B496F1DB06899315924 /* SettingsView.swift */; };
+				80E107762F6C668AEB00D896 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 58CBF4DB865C20A8A7F54B1F /* Assets.xcassets */; };
+				A1AD099E16F3B4B7828CC2DA /* HappymodeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4641BF3033696CA87BECCD7A /* HappymodeApp.swift */; };
+			E1A1B2C3D4E5F60718293A4B /* SolarPackage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A1B2C3D4E5F60718293A4B /* SolarPackage.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		05DF75CBE1DB50C10F66E6AC /* MenuBarView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		0AE310D49E3691443537A7C3 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		0C92B588378E80BF1BB0A49F /* Lighter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lighter.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		4641BF3033696CA87BECCD7A /* LighterApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LighterApp.swift; sourceTree = "<group>"; };
-		58CBF4DB865C20A8A7F54B1F /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		64CA2B496F1DB06899315924 /* SettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		8E24B77649F24352D1540B80 /* SolarCalculator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SolarCalculator.swift; sourceTree = "<group>"; };
-		B2A4DDCAF699250D5EF6012D /* ThemeController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ThemeController.swift; sourceTree = "<group>"; };
-		CFBF5AC0ED953AF3BBB168C1 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		0C92B588378E80BF1BB0A49F /* happymode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = happymode.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4641BF3033696CA87BECCD7A /* HappymodeApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HappymodeApp.swift; sourceTree = "<group>"; };
+			58CBF4DB865C20A8A7F54B1F /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+			64CA2B496F1DB06899315924 /* SettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+			8E24B77649F24352D1540B80 /* SolarCalculator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SolarCalculator.swift; sourceTree = "<group>"; };
+			B2A4DDCAF699250D5EF6012D /* ThemeController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ThemeController.swift; sourceTree = "<group>"; };
+			CFBF5AC0ED953AF3BBB168C1 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+			D1A1B2C3D4E5F60718293A4B /* SolarPackage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SolarPackage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A9806E556D9AE522C8CF141F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
-			files = (
-				2AF7C7AB3D7B7484E90E4BE3 /* Cocoa.framework in Frameworks */,
-				C371AFF7980EE79E40AAE749 /* SwiftUICharts in Frameworks */,
-			);
+				files = (
+					2AF7C7AB3D7B7484E90E4BE3 /* Cocoa.framework in Frameworks */,
+				);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -55,23 +55,24 @@
 			children = (
 				E86F8D70F2AF1D1816B9505F /* Products */,
 				0A4494C6D6DD29070D2507F1 /* Frameworks */,
-				45B6D0D5BE294E20D7B5994E /* Lighter */,
+				45B6D0D5BE294E20D7B5994E /* happymode */,
 			);
 			sourceTree = "<group>";
 		};
-		45B6D0D5BE294E20D7B5994E /* Lighter */ = {
+		45B6D0D5BE294E20D7B5994E /* happymode */ = {
 			isa = PBXGroup;
 			children = (
-				4641BF3033696CA87BECCD7A /* LighterApp.swift */,
+				4641BF3033696CA87BECCD7A /* HappymodeApp.swift */,
 				05DF75CBE1DB50C10F66E6AC /* MenuBarView.swift */,
 				64CA2B496F1DB06899315924 /* SettingsView.swift */,
-				B2A4DDCAF699250D5EF6012D /* ThemeController.swift */,
-				8E24B77649F24352D1540B80 /* SolarCalculator.swift */,
-				58CBF4DB865C20A8A7F54B1F /* Assets.xcassets */,
-				0AE310D49E3691443537A7C3 /* Info.plist */,
-			);
-			name = Lighter;
-			path = Lighter;
+					B2A4DDCAF699250D5EF6012D /* ThemeController.swift */,
+					8E24B77649F24352D1540B80 /* SolarCalculator.swift */,
+					D1A1B2C3D4E5F60718293A4B /* SolarPackage.swift */,
+					58CBF4DB865C20A8A7F54B1F /* Assets.xcassets */,
+					0AE310D49E3691443537A7C3 /* Info.plist */,
+				);
+			name = happymode;
+			path = happymode;
 			sourceTree = "<group>";
 		};
 		CDD7B2004449622C6993A502 /* OS X */ = {
@@ -85,7 +86,7 @@
 		E86F8D70F2AF1D1816B9505F /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				0C92B588378E80BF1BB0A49F /* Lighter.app */,
+				0C92B588378E80BF1BB0A49F /* happymode.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -93,26 +94,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		460B57497454E9F60DB73941 /* Lighter */ = {
+		460B57497454E9F60DB73941 /* happymode */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 33D1566EA59C44095098E59A /* Build configuration list for PBXNativeTarget "Lighter" */;
+			buildConfigurationList = 33D1566EA59C44095098E59A /* Build configuration list for PBXNativeTarget "happymode" */;
 			buildPhases = (
 				69700775F0F1DFB8344CFC1B /* Sources */,
 				A9806E556D9AE522C8CF141F /* Frameworks */,
 				2E9AE55E57B94AAE577404FE /* Resources */,
 			);
-			buildRules = (
-			);
-			dependencies = (
-				40691894D4674DC0EA37D18C /* PBXTargetDependency */,
-			);
-			name = Lighter;
-			packageProductDependencies = (
-				B042AB69F81858DAEC84AA1C /* SwiftUICharts */,
-			);
-			productName = Lighter;
-			productReference = 0C92B588378E80BF1BB0A49F /* Lighter.app */;
-			productType = "com.apple.product-type.application";
+				buildRules = (
+				);
+				dependencies = (
+				);
+				name = happymode;
+				packageProductDependencies = (
+				);
+				productName = happymode;
+				productReference = 0C92B588378E80BF1BB0A49F /* happymode.app */;
+				productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
@@ -123,7 +122,7 @@
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 1600;
 			};
-			buildConfigurationList = 1E92532BB38711D232C6EC32 /* Build configuration list for PBXProject "Lighter" */;
+			buildConfigurationList = 1E92532BB38711D232C6EC32 /* Build configuration list for PBXProject "happymode" */;
 			compatibilityVersion = "Xcode 16.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -131,17 +130,16 @@
 				en,
 				Base,
 			);
-			mainGroup = 2E38997761EEBBB1E0E0637C;
-			minimizedProjectReferenceProxies = 0;
-			packageReferences = (
-				59B0C0DBA50D629DAD2D45A6 /* XCRemoteSwiftPackageReference "SwiftUICharts" */,
-			);
-			preferredProjectObjectVersion = 77;
-			productRefGroup = E86F8D70F2AF1D1816B9505F /* Products */;
+				mainGroup = 2E38997761EEBBB1E0E0637C;
+				minimizedProjectReferenceProxies = 0;
+				packageReferences = (
+				);
+				preferredProjectObjectVersion = 77;
+				productRefGroup = E86F8D70F2AF1D1816B9505F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				460B57497454E9F60DB73941 /* Lighter */,
+				460B57497454E9F60DB73941 /* happymode */,
 			);
 		};
 /* End PBXProject section */
@@ -162,22 +160,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A1AD099E16F3B4B7828CC2DA /* LighterApp.swift in Sources */,
-				432B7EEC6E4E024BF6E00BF1 /* MenuBarView.swift in Sources */,
-				5D5FA8F017267C5A5A4E8F91 /* SettingsView.swift in Sources */,
-				0287722DE211E09938FC198F /* ThemeController.swift in Sources */,
-				39282ECC26B57104EA10FA07 /* SolarCalculator.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		40691894D4674DC0EA37D18C /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			productRef = B042AB69F81858DAEC84AA1C /* SwiftUICharts */;
-		};
-/* End PBXTargetDependency section */
+				A1AD099E16F3B4B7828CC2DA /* HappymodeApp.swift in Sources */,
+					432B7EEC6E4E024BF6E00BF1 /* MenuBarView.swift in Sources */,
+					5D5FA8F017267C5A5A4E8F91 /* SettingsView.swift in Sources */,
+					0287722DE211E09938FC198F /* ThemeController.swift in Sources */,
+					39282ECC26B57104EA10FA07 /* SolarCalculator.swift in Sources */,
+					E1A1B2C3D4E5F60718293A4B /* SolarPackage.swift in Sources */,
+				);
+				runOnlyForDeploymentPostprocessing = 0;
+			};
+	/* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
 		1885264D9AA0872B503D46D6 /* Release */ = {
@@ -303,13 +295,13 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Lighter/Info.plist;
+				INFOPLIST_FILE = happymode/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.atlantic.lighter;
+				PRODUCT_BUNDLE_IDENTIFIER = com.atlantic.happymode;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
 			};
@@ -323,13 +315,13 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Lighter/Info.plist;
+				INFOPLIST_FILE = happymode/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.atlantic.lighter;
+				PRODUCT_BUNDLE_IDENTIFIER = com.atlantic.happymode;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
 			};
@@ -338,7 +330,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1E92532BB38711D232C6EC32 /* Build configuration list for PBXProject "Lighter" */ = {
+		1E92532BB38711D232C6EC32 /* Build configuration list for PBXProject "happymode" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				31375F38DE54530C2B43C6EF /* Debug */,
@@ -347,7 +339,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		33D1566EA59C44095098E59A /* Build configuration list for PBXNativeTarget "Lighter" */ = {
+		33D1566EA59C44095098E59A /* Build configuration list for PBXNativeTarget "happymode" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7CB0484A2374E25BD9F88B92 /* Release */,
@@ -358,25 +350,6 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		59B0C0DBA50D629DAD2D45A6 /* XCRemoteSwiftPackageReference "SwiftUICharts" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/willdale/SwiftUICharts.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.9.9;
-			};
 		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		B042AB69F81858DAEC84AA1C /* SwiftUICharts */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 59B0C0DBA50D629DAD2D45A6 /* XCRemoteSwiftPackageReference "SwiftUICharts" */;
-			productName = SwiftUICharts;
-		};
-/* End XCSwiftPackageProductDependency section */
-
-	};
 	rootObject = 591C789A6274195F00C14E52 /* Project object */;
 }

@@ -1,25 +1,25 @@
 require 'rubygems'
 require 'xcodeproj'
 
-project_path = 'Lighter.xcodeproj'
+project_path = 'happymode.xcodeproj'
 project = Xcodeproj::Project.new(project_path)
 
-target = project.new_target(:application, 'Lighter', :osx, '14.0')
+target = project.new_target(:application, 'happymode', :osx, '14.0')
 
 target.build_configurations.each do |config|
-  config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.atlantic.lighter'
+  config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.atlantic.happymode'
   config.build_settings['SWIFT_VERSION'] = '5.0'
-  config.build_settings['INFOPLIST_FILE'] = 'Lighter/Info.plist'
+  config.build_settings['INFOPLIST_FILE'] = 'happymode/Info.plist'
   config.build_settings['GENERATE_INFOPLIST_FILE'] = 'NO'
   config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '14.0'
   config.build_settings['ASSETCATALOG_COMPILER_APPICON_NAME'] = 'AppIcon'
   config.build_settings['CODE_SIGN_STYLE'] = 'Automatic'
 end
 
-app_group = project.main_group.new_group('Lighter', 'Lighter')
+app_group = project.main_group.new_group('happymode', 'happymode')
 
 source_files = [
-  'LighterApp.swift',
+  'HappymodeApp.swift',
   'MenuBarView.swift',
   'SettingsView.swift',
   'ThemeController.swift',

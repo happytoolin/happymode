@@ -23,8 +23,8 @@
     <key>LSUIElement</key>
     <true/>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Lighter uses your location to calculate sunrise and sunset and switch appearance automatically.</string>
+    <string>happymode uses your location to calculate sunrise and sunset and switch appearance automatically.</string>
     <key>NSAppleEventsUsageDescription</key>
-    <string>Lighter needs Automation access to control System Events and switch macOS appearance automatically.</string>
+    <string>happymode needs Automation access to control System Events and switch macOS appearance automatically.</string>
 </dict>
 </plist>

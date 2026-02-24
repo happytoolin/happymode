@@ -298,7 +298,7 @@ final class ThemeController: NSObject, ObservableObject {
         } else {
             automationPermissionKnown = true
             automationPermissionGranted = false
-            errorText = "Automation access not granted yet. Click Open Privacy and allow Lighter under Automation."
+            errorText = "Automation access not granted yet. Click Open Privacy and allow happymode under Automation."
         }
 
         refreshNow(forceLocation: false)

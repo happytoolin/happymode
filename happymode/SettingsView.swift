@@ -25,7 +25,7 @@ struct SettingsView: View {
     private var titleBlock: some View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Lighter Options")
+                Text("happymode Options")
                     .font(.title3.weight(.semibold))
                 Text("Set mode, permissions, and location source.")
                     .font(.caption)
