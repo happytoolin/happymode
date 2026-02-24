@@ -8,18 +8,33 @@ DerivedData/
 *.xccheckout
 *.moved-aside
 *.xcscmblueprint
+*.hmap
 
 # User-specific project/workspace data
+xcuserdata/
 *.xcworkspace/xcuserdata/
 *.xcodeproj/xcuserdata/
-xcuserdata/
+
+# App packaging
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
 
 # Swift Package Manager
 .swiftpm/
 .build/
 
+# Carthage
+Carthage/Build/
+
 # Fastlane
 fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/
+fastlane/screenshots/**/*.png
 fastlane/test_output/
+fastlane/test_output
