@@ -19,6 +19,11 @@ jobs:
         with:
           xcode-version: latest-stable
 
+      - name: Run unit tests
+        run: |
+          set -euo pipefail
+          swift test
+
       - name: Build app
         run: |
           set -euo pipefail

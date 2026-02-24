@@ -64,6 +64,38 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.segmented)
                 }
+
+                if controller.appearancePreference == .automatic {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Automatic Schedule")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Picker("Automatic Schedule", selection: $controller.automaticScheduleMode) {
+                            ForEach(AutomaticScheduleMode.menuOrder) { mode in
+                                Text(mode.title).tag(mode)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+
+                    if controller.automaticScheduleMode == .customTimes {
+                        HStack(spacing: 12) {
+                            DatePicker("Light at",
+                                       selection: $controller.customLightTime,
+                                       displayedComponents: .hourAndMinute)
+
+                            DatePicker("Dark at",
+                                       selection: $controller.customDarkTime,
+                                       displayedComponents: .hourAndMinute)
+                        }
+                        .datePickerStyle(.field)
+
+                        Text("Custom times run daily in your current macOS time zone.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
         }
     }

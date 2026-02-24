@@ -14,6 +14,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - GitHub Actions CI workflow for macOS builds on pull requests and `main` pushes.
 - GitHub Actions release workflow for `v*` tags to build, package, and publish release artifacts.
 - Tap cask rendering helper script for automated Homebrew tap updates.
+- Automatic scheduling mode selector with support for custom Light/Dark switch times.
+- Unit test suite for schedule decision logic (`swift test`).
 
 ### Changed
 

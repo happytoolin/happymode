@@ -1,12 +1,13 @@
 # happymode
 
-A native macOS menu bar app that automatically switches Light/Dark appearance based on sunrise and sunset.
+A native macOS menu bar app that automatically switches Light/Dark appearance based on sunrise/sunset or custom daily times.
 
 ## What it does
 
 - Runs as a menu bar utility (`LSUIElement`), without a Dock icon.
 - Uses CoreLocation for automatic coordinates.
 - Supports manual coordinate fallback and override.
+- Supports custom Light/Dark switch times that do not require location.
 - Calculates solar transitions locally (vendored Solar implementation, no network dependency).
 - Applies system appearance through AppleScript (`System Events`).
 
@@ -37,6 +38,12 @@ xcodebuild \
 open build/Debug/happymode.app
 ```
 
+### Run tests
+
+```bash
+swift test
+```
+
 ## Project structure
 
 ```text
@@ -62,6 +69,9 @@ happymode/
 │       └── Info.plist
 ├── scripts/
 │   └── create_project.rb
+├── Package.swift
+├── happymodeTests/
+│   └── AppearanceScheduleEngineTests.swift
 └── README.md
 ```
 
@@ -79,7 +89,7 @@ Then this README will render them:
 
 ## Permissions and privacy
 
-- `Location Services`: required only for automatic location mode.
+- `Location Services`: required only when using `Auto` + `Sunrise/Sunset`.
 - `Automation -> System Events`: required to apply macOS Light/Dark mode.
 
 If location permission is denied, use manual latitude/longitude in `Options...`.

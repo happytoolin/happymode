@@ -3,18 +3,24 @@ import SwiftUI
 
 struct MenuBarView: View {
     @ObservedObject var controller: ThemeController
-    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             header
 
-            Picker("Appearance", selection: $controller.appearancePreference) {
-                ForEach(AppearancePreference.menuOrder) { preference in
-                    Text(preference.title).tag(preference)
-                }
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Mode")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                appearanceModeControl
             }
-            .pickerStyle(.segmented)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.secondary.opacity(0.08))
+            )
 
             if controller.setupNeeded {
                 setupBanner
@@ -28,21 +34,22 @@ struct MenuBarView: View {
                     .foregroundStyle(.red)
             }
 
-            Divider()
-
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 Button("Options...") {
-                    NSApp.activate(ignoringOtherApps: true)
-                    openSettings()
+                    controller.openAppSettings()
                 }
+                .buttonStyle(.bordered)
+                .frame(maxWidth: .infinity)
 
                 Button("Quit") {
                     NSApplication.shared.terminate(nil)
                 }
+                .buttonStyle(.bordered)
+                .frame(maxWidth: .infinity)
             }
         }
-        .padding(14)
-        .frame(width: 360)
+        .padding(12)
+        .frame(width: 320)
     }
 
     private var header: some View {
@@ -68,9 +75,11 @@ struct MenuBarView: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(controller.targetIsDarkMode ? "Dark mode active" : "Light mode active")
                     .font(.headline)
-                Text(controller.setupStatusText)
-                    .font(.caption)
-                    .foregroundStyle(controller.setupNeeded ? .orange : .secondary)
+                if controller.setupNeeded {
+                    Text("Setup needed")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
             }
 
             Spacer()
@@ -94,8 +103,7 @@ struct MenuBarView: View {
             Spacer()
 
             Button("Open") {
-                NSApp.activate(ignoringOtherApps: true)
-                openSettings()
+                controller.openAppSettings()
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.small)
@@ -110,30 +118,23 @@ struct MenuBarView: View {
     private var modeSummaryChip: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
-                metricValue(title: "Sunrise", value: controller.currentSunriseText, systemImage: "sunrise.fill")
+                metricValue(title: controller.transitionStartTitle,
+                            value: controller.currentSunriseText,
+                            systemImage: controller.transitionStartSymbol)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                metricValue(title: "Sunset", value: controller.currentSunsetText, systemImage: "sunset.fill")
+                metricValue(title: controller.transitionEndTitle,
+                            value: controller.currentSunsetText,
+                            systemImage: controller.transitionEndSymbol)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal, 2)
 
             Divider()
 
-            HStack(spacing: 6) {
-                Image(systemName: summarySystemImage)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-
-                Text("Condition")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                Spacer(minLength: 8)
-
-                Text(controller.appearancePreference.conditionTitle)
-                    .font(.caption.weight(.semibold))
-            }
-            .padding(.horizontal, 2)
+            Text("Sunrise and sunset")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 10)
@@ -160,15 +161,30 @@ struct MenuBarView: View {
         }
     }
 
-    private var summarySystemImage: String {
-        switch controller.appearancePreference {
-        case .forceLight:
-            return "sun.max.fill"
-        case .forceDark:
-            return "moon.fill"
-        case .automatic:
-            return controller.targetIsDarkMode ? "sunrise.fill" : "sunset.fill"
+    private var appearanceModeControl: some View {
+        HStack(spacing: 6) {
+            ForEach(AppearancePreference.menuOrder) { preference in
+                Button {
+                    controller.appearancePreference = preference
+                } label: {
+                    Text(preference.title)
+                        .font(.caption.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(controller.appearancePreference == preference ? .white : .primary)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(controller.appearancePreference == preference ? Color.accentColor : Color.secondary.opacity(0.16))
+                )
+            }
         }
+        .padding(4)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.secondary.opacity(0.12))
+        )
     }
 
 }
