@@ -21,3 +21,4 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - README expanded with architecture, build, release, and CI/CD documentation.
 - Project generation script moved to `scripts/create_project.rb` and aligned with the new structure.
+- Homebrew tap cask template now strips quarantine post-install for unsigned builds.

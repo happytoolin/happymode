@@ -46,6 +46,20 @@ open build/Debug/happymode.app
 swift test
 ```
 
+### Homebrew install (tap)
+
+```bash
+brew tap happytoolin/happytap
+brew install --cask happymode
+```
+
+### First launch on macOS
+
+If macOS blocks launch, use one of:
+
+1. System Settings -> Privacy & Security -> Open Anyway
+2. Right-click `happymode.app` in Applications -> Open
+
 ## Project structure
 
 ```text
@@ -142,6 +156,8 @@ If the secret is missing, release still succeeds, but tap update is skipped.
 
 ## Troubleshooting
 
+- App is blocked by macOS Gatekeeper:
+  - If launch is still blocked after "Open Anyway", run `xattr -dr com.apple.quarantine "/Applications/happymode.app"` and launch again.
 - App does not switch appearance:
   - Open `Options...`, click `Grant` under Automation, and allow `happymode` in macOS Privacy settings.
 - Automatic location is unavailable:

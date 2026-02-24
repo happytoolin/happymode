@@ -22,5 +22,17 @@ cask "happymode" do
   homepage "https://github.com/${REPO}"
 
   app "happymode.app"
+
+  # Unsigned app: strip quarantine so Homebrew installs run without manual Gatekeeper bypass.
+  postflight do
+    system_command "/usr/bin/xattr",
+                   args: ["-dr", "com.apple.quarantine", "#{appdir}/happymode.app"]
+  end
+
+  caveats <<~EOS
+    happymode is distributed unsigned (no Apple Developer ID).
+    If macOS still blocks launch on your machine, run:
+      xattr -dr com.apple.quarantine "/Applications/happymode.app"
+  EOS
 end
 EOF
