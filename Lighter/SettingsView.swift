@@ -58,7 +58,7 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
 
                     Picker("Mode", selection: $controller.appearancePreference) {
-                        ForEach(AppearancePreference.allCases) { preference in
+                        ForEach(AppearancePreference.menuOrder) { preference in
                             Text(preference.title).tag(preference)
                         }
                     }

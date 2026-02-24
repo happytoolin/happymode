@@ -8,6 +8,8 @@ enum AppearancePreference: String, CaseIterable, Identifiable {
     case forceLight
     case forceDark
 
+    static let menuOrder: [AppearancePreference] = [.automatic, .forceLight, .forceDark]
+
     var id: String { rawValue }
 
     var title: String {
@@ -18,6 +20,17 @@ enum AppearancePreference: String, CaseIterable, Identifiable {
             return "Light"
         case .forceDark:
             return "Dark"
+        }
+    }
+
+    var conditionTitle: String {
+        switch self {
+        case .automatic:
+            return "Automatic"
+        case .forceLight:
+            return "Forced Light mode"
+        case .forceDark:
+            return "Forced Night mode"
         }
     }
 }

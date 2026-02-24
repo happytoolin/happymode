@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -11,9 +11,10 @@
 		2AF7C7AB3D7B7484E90E4BE3 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CFBF5AC0ED953AF3BBB168C1 /* Cocoa.framework */; };
 		39282ECC26B57104EA10FA07 /* SolarCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E24B77649F24352D1540B80 /* SolarCalculator.swift */; };
 		432B7EEC6E4E024BF6E00BF1 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05DF75CBE1DB50C10F66E6AC /* MenuBarView.swift */; };
-		5D5FA8F017267C5A5A4E8F91 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64CA2B496F1DB06899315924 /* SettingsView.swift */; };
-		80E107762F6C668AEB00D896 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 58CBF4DB865C20A8A7F54B1F /* Assets.xcassets */; };
-		A1AD099E16F3B4B7828CC2DA /* LighterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4641BF3033696CA87BECCD7A /* LighterApp.swift */; };
+			5D5FA8F017267C5A5A4E8F91 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64CA2B496F1DB06899315924 /* SettingsView.swift */; };
+			80E107762F6C668AEB00D896 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 58CBF4DB865C20A8A7F54B1F /* Assets.xcassets */; };
+			A1AD099E16F3B4B7828CC2DA /* LighterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4641BF3033696CA87BECCD7A /* LighterApp.swift */; };
+			C371AFF7980EE79E40AAE749 /* SwiftUICharts in Frameworks */ = {isa = PBXBuildFile; productRef = B042AB69F81858DAEC84AA1C /* SwiftUICharts */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +35,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2AF7C7AB3D7B7484E90E4BE3 /* Cocoa.framework in Frameworks */,
+				C371AFF7980EE79E40AAE749 /* SwiftUICharts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -102,8 +104,12 @@
 			buildRules = (
 			);
 			dependencies = (
+				40691894D4674DC0EA37D18C /* PBXTargetDependency */,
 			);
 			name = Lighter;
+			packageProductDependencies = (
+				B042AB69F81858DAEC84AA1C /* SwiftUICharts */,
+			);
 			productName = Lighter;
 			productReference = 0C92B588378E80BF1BB0A49F /* Lighter.app */;
 			productType = "com.apple.product-type.application";
@@ -118,7 +124,7 @@
 				LastUpgradeCheck = 1600;
 			};
 			buildConfigurationList = 1E92532BB38711D232C6EC32 /* Build configuration list for PBXProject "Lighter" */;
-			compatibilityVersion = "Xcode 3.2";
+			compatibilityVersion = "Xcode 16.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -127,6 +133,9 @@
 			);
 			mainGroup = 2E38997761EEBBB1E0E0637C;
 			minimizedProjectReferenceProxies = 0;
+			packageReferences = (
+				59B0C0DBA50D629DAD2D45A6 /* XCRemoteSwiftPackageReference "SwiftUICharts" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E86F8D70F2AF1D1816B9505F /* Products */;
 			projectDirPath = "";
@@ -162,6 +171,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		40691894D4674DC0EA37D18C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = B042AB69F81858DAEC84AA1C /* SwiftUICharts */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		1885264D9AA0872B503D46D6 /* Release */ = {
@@ -288,7 +304,10 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Lighter/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.atlantic.lighter;
 				SDKROOT = macosx;
@@ -305,7 +324,10 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Lighter/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.atlantic.lighter;
 				SDKROOT = macosx;
@@ -335,6 +357,26 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		59B0C0DBA50D629DAD2D45A6 /* XCRemoteSwiftPackageReference "SwiftUICharts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/willdale/SwiftUICharts.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.9;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B042AB69F81858DAEC84AA1C /* SwiftUICharts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 59B0C0DBA50D629DAD2D45A6 /* XCRemoteSwiftPackageReference "SwiftUICharts" */;
+			productName = SwiftUICharts;
+		};
+/* End XCSwiftPackageProductDependency section */
+
 	};
 	rootObject = 591C789A6274195F00C14E52 /* Project object */;
 }

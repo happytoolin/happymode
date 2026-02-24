@@ -10,7 +10,7 @@ struct MenuBarView: View {
             header
 
             Picker("Appearance", selection: $controller.appearancePreference) {
-                ForEach(AppearancePreference.allCases) { preference in
+                ForEach(AppearancePreference.menuOrder) { preference in
                     Text(preference.title).tag(preference)
                 }
             }
@@ -20,21 +20,7 @@ struct MenuBarView: View {
                 setupBanner
             }
 
-            WeeklyDaylightTimelineView(days: controller.weeklySolarDays)
-
-            HStack(spacing: 10) {
-                metricChip(title: "Sunrise", value: controller.currentSunriseText, systemImage: "sunrise.fill")
-                metricChip(title: "Sunset", value: controller.currentSunsetText, systemImage: "sunset.fill")
-            }
-
-            Text(controller.nextTransitionText)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Text(controller.locationStatusText)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
+            modeSummaryChip
 
             if let errorText = controller.errorText {
                 Text(errorText)
@@ -56,7 +42,7 @@ struct MenuBarView: View {
             }
         }
         .padding(14)
-        .frame(width: 380)
+        .frame(width: 360)
     }
 
     private var header: some View {
@@ -121,149 +107,68 @@ struct MenuBarView: View {
         )
     }
 
-    private func metricChip(title: String, value: String, systemImage: String) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: systemImage)
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+    private var modeSummaryChip: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                metricValue(title: "Sunrise", value: controller.currentSunriseText, systemImage: "sunrise.fill")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                metricValue(title: "Sunset", value: controller.currentSunsetText, systemImage: "sunset.fill")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.horizontal, 2)
 
-            VStack(alignment: .leading, spacing: 0) {
+            Divider()
+
+            HStack(spacing: 6) {
+                Image(systemName: summarySystemImage)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+
+                Text("Condition")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Spacer(minLength: 8)
+
+                Text(controller.appearancePreference.conditionTitle)
+                    .font(.caption.weight(.semibold))
+            }
+            .padding(.horizontal, 2)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.secondary.opacity(0.08))
+        )
+    }
+
+    private func metricValue(title: String, value: String, systemImage: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 4) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
                 Text(title)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                Text(value)
-                    .font(.caption.weight(.semibold))
             }
-        }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 9)
-                .fill(Color.secondary.opacity(0.10))
-        )
-    }
-}
 
-private struct WeeklyDaylightTimelineView: View {
-    let days: [WeeklySolarDay]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("7-Day Daylight")
+            Text(value)
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-
-            VStack(spacing: 7) {
-                if days.isEmpty {
-                    Text("Waiting for location")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, minHeight: 100)
-                } else {
-                    ForEach(days) { day in
-                        DaylightTrackRow(day: day)
-                    }
-                }
-            }
-            .padding(10)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(
-                        LinearGradient(
-                            colors: [Color(red: 0.07, green: 0.13, blue: 0.26), Color(red: 0.15, green: 0.26, blue: 0.45)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-            )
-        }
-    }
-}
-
-private struct DaylightTrackRow: View {
-    let day: WeeklySolarDay
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Text(day.date.formatted(.dateTime.weekday(.abbreviated)))
-                .font(.caption.weight(.medium))
-                .foregroundStyle(.white.opacity(0.9))
-                .frame(width: 28, alignment: .leading)
-
-            GeometryReader { proxy in
-                let width = proxy.size.width
-
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Color.black.opacity(0.32))
-                        .frame(height: 14)
-
-                    switch day.kind {
-                    case .normal(let sunrise, let sunset):
-                        let start = max(0, min(1, hourValue(sunrise) / 24))
-                        let end = max(0, min(1, hourValue(sunset) / 24))
-                        let daylightWidth = max((end - start) * width, 2)
-
-                        Capsule()
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color(red: 1.00, green: 0.88, blue: 0.26), Color(red: 0.98, green: 0.57, blue: 0.19)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .frame(width: daylightWidth, height: 14)
-                            .offset(x: start * width)
-
-                    case .alwaysLight:
-                        Capsule()
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color(red: 1.00, green: 0.90, blue: 0.45), Color(red: 1.00, green: 0.73, blue: 0.33)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .frame(height: 14)
-
-                    case .alwaysDark:
-                        Image(systemName: "moon.stars.fill")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(.white.opacity(0.75))
-                            .padding(.leading, 4)
-                    }
-                }
-            }
-            .frame(height: 14)
-
-            Text(daySummary(day))
-                .font(.caption2)
-                .foregroundStyle(.white.opacity(0.75))
-                .frame(width: 90, alignment: .trailing)
-        }
-        .frame(height: 16)
-    }
-
-    private func hourValue(_ date: Date) -> Double {
-        let components = Calendar.current.dateComponents([.hour, .minute], from: date)
-        return Double(components.hour ?? 0) + (Double(components.minute ?? 0) / 60)
-    }
-
-    private func daySummary(_ day: WeeklySolarDay) -> String {
-        switch day.kind {
-        case .normal(let sunrise, let sunset):
-            return "\(shortTime(sunrise)) - \(shortTime(sunset))"
-        case .alwaysLight:
-            return "All day"
-        case .alwaysDark:
-            return "No sun"
         }
     }
 
-    private func shortTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        formatter.dateStyle = .none
-        return formatter.string(from: date)
+    private var summarySystemImage: String {
+        switch controller.appearancePreference {
+        case .forceLight:
+            return "sun.max.fill"
+        case .forceDark:
+            return "moon.fill"
+        case .automatic:
+            return controller.targetIsDarkMode ? "sunrise.fill" : "sunset.fill"
+        }
     }
+
 }
