@@ -2,6 +2,8 @@
 
 A native macOS menu bar app that automatically switches Light/Dark appearance based on sunrise/sunset or custom daily times.
 
+![happymode OG image](docs/og-image.png)
+
 ## What it does
 
 - Runs as a menu bar utility (`LSUIElement`), without a Dock icon.

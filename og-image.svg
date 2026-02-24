@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <!-- Background Base Gradient -->
+    <linearGradient id="bgBase" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F8FAFC" />
+      <stop offset="100%" stop-color="#F1F5F9" />
+    </linearGradient>
+
+    <!-- App Icon Card Gradient -->
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#F8FAFC" />
+    </linearGradient>
+
+    <!-- Filters for Blur and Shadow -->
+    <filter id="hugeBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="120" />
+    </filter>
+
+    <filter id="appShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#0F172A" flood-opacity="0.08" />
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.04" />
+    </filter>
+  </defs>
+
+  <!-- Base Canvas -->
+  <rect width="1200" height="630" fill="url(#bgBase)" />
+
+  <!-- Thematic Mesh Gradient (Night shifting into Day) -->
+  <!-- Night / Twilight (Bottom Left) -->
+  <circle cx="150" cy="630" r="500" fill="#818CF8" opacity="0.15" filter="url(#hugeBlur)" />
+  <circle cx="0" cy="500" r="400" fill="#334155" opacity="0.10" filter="url(#hugeBlur)" />
+  
+  <!-- Day / Sunrise (Top Right) -->
+  <circle cx="1050" cy="0" r="500" fill="#F59E0B" opacity="0.15" filter="url(#hugeBlur)" />
+  <circle cx="1200" cy="150" r="400" fill="#FCD34D" opacity="0.10" filter="url(#hugeBlur)" />
+
+  <!-- Center Content Group -->
+  <g transform="translate(0, -20)">
+    
+    <!-- macOS App Icon Base (Squircle) -->
+    <rect 
+      x="488" y="110" 
+      width="224" height="224" 
+      rx="52" 
+      fill="url(#cardGrad)" 
+      stroke="#E2E8F0" 
+      stroke-width="1.5" 
+      filter="url(#appShadow)" 
+    />
+
+    <!-- Original User Icon (Scaled 3.5x to perfectly fit the 224px card) -->
+    <g transform="translate(488, 110) scale(3.5)">
+      <!-- Night Side: Minimalist Crescent Moon (Left Eye) -->
+      <path 
+        d="M 24 17 A 8 8 0 0 0 24 33 A 8.5 8.5 0 0 1 24 17 Z" 
+        fill="#334155" 
+      />
+
+      <!-- Day Side: Minimalist Sun (Right Eye) -->
+      <circle 
+        cx="40" cy="25" r="8" 
+        fill="#F59E0B" 
+      />
+
+      <!-- The Unifying Happy Smile -->
+      <path 
+        d="M 18 41 Q 32 54 46 41" 
+        stroke="#334155" 
+        stroke-width="4.5" 
+        stroke-linecap="round" 
+        fill="none" 
+      />
+    </g>
+
+    <!-- Typography: Title -->
+    <text 
+      x="600" y="440" 
+      font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
+      font-size="76" 
+      font-weight="800" 
+      letter-spacing="-1.5" 
+      fill="#0F172A" 
+      text-anchor="middle">
+      happymode
+    </text>
+
+    <!-- Typography: Subtitle -->
+    <text 
+      x="600" y="500" 
+      font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
+      font-size="30" 
+      font-weight="500" 
+      letter-spacing="-0.5" 
+      fill="#64748B" 
+      text-anchor="middle">
+      Auto-toggles macOS Light &amp; Dark mode by the sun.
+    </text>
+
+    <!-- Small "macOS" OS Pill/Badge -->
+    <g transform="translate(544, 540)">
+      <rect 
+        x="0" y="0" 
+        width="112" height="34" 
+        rx="17" 
+        fill="#FFFFFF" 
+        stroke="#CBD5E1" 
+        stroke-width="1.5" 
+        opacity="0.8"
+      />
+      <text 
+        x="56" y="22" 
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
+        font-size="13" 
+        font-weight="700" 
+        letter-spacing="1.2" 
+        fill="#475569" 
+        text-anchor="middle">
+        FOR macOS
+      </text>
+    </g>
+
+  </g>
+</svg>
