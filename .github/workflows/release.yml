@@ -13,7 +13,7 @@ jobs:
     runs-on: macos-latest
     env:
       APP_NAME: happymode
-      TAP_REPO: happytoolin/happytap
+      TAP_REPO: happytoolin/homebrew-happytap
 
     steps:
       - name: Checkout

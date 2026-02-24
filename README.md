@@ -1,33 +1,81 @@
 # happymode
 
-A native macOS menu bar app that automatically switches Light/Dark appearance based on sunrise/sunset or custom daily times.
+[![CI](https://github.com/happytoolin/happymode/actions/workflows/ci.yml/badge.svg)](https://github.com/happytoolin/happymode/actions/workflows/ci.yml)
+[![Release](https://github.com/happytoolin/happymode/actions/workflows/release.yml/badge.svg)](https://github.com/happytoolin/happymode/actions/workflows/release.yml)
+[![Latest release](https://img.shields.io/github/v/release/happytoolin/happymode?display_name=tag)](https://github.com/happytoolin/happymode/releases)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+
+Native macOS menu bar app that controls Light/Dark appearance based on sunrise/sunset or custom daily times.
 
 ![happymode OG image](docs/og-image.png)
 
-## What it does
+## Highlights
 
-- Runs as a menu bar utility (`LSUIElement`), without a Dock icon.
-- Uses CoreLocation for automatic coordinates.
-- Supports manual coordinate fallback and override.
-- Supports custom Light/Dark switch times that do not require location.
-- Calculates solar transitions locally (vendored Solar implementation, no network dependency).
-- Applies system appearance through AppleScript (`System Events`).
+- Menu bar utility (no Dock icon) with popup controls and right-click context menu.
+- `Auto`, `Light`, and `Dark` modes.
+- Two scheduling options:
+  - `Sunrise and sunset` (automatic by location or manual coordinates).
+  - `Custom times` (user-defined daily switch times).
+- Countdown in the menu bar for time remaining to next sunrise/sunset transition.
+- Local solar calculations (no external API calls).
 
-## Requirements
+## Install
 
-- macOS 14.0+
+### Homebrew (recommended)
+
+```bash
+brew tap happytoolin/happytap
+brew install --cask happymode
+```
+
+### Direct download
+
+Download the latest build from [Releases](https://github.com/happytoolin/happymode/releases), then move `happymode.app` to `/Applications`.
+
+## First launch on macOS
+
+If Gatekeeper blocks launch, use one of these:
+
+1. Open `System Settings -> Privacy & Security` and click `Open Anyway`.
+2. Right-click `happymode.app` in `/Applications`, then click `Open`.
+
+If needed:
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/happymode.app"
+```
+
+## Usage
+
+1. Launch `happymode`.
+2. Click the menu bar icon to open the popup.
+3. Set `Mode` to `Auto`, `Light`, or `Dark`.
+4. In `Auto`, choose either:
+   - `Sunrise and sunset`
+   - `Custom times`
+5. Open `Options...` for location/manual coordinates and permission setup.
+
+## Screenshots
+
+![Menu bar](docs/screenshots/menu-bar.png)
+![Options popup](docs/screenshots/settings.png)
+
+## Permissions
+
+- `Automation -> System Events`: required to apply macOS appearance.
+- `Location Services`: required only for `Sunrise and sunset` in automatic location mode.
+
+If location is denied, disable automatic location and set manual latitude/longitude in `Options...`.
+
+## Development
+
+### Requirements
+
+- macOS 14+
 - Xcode 16+
-- Swift 5+
+- Swift 5.10+
 
-## Quick start
-
-### Xcode
-
-1. Open `happymode.xcodeproj`.
-2. Select the `happymode` scheme.
-3. Build and run.
-
-### Terminal
+### Build (Debug)
 
 ```bash
 xcodebuild \
@@ -35,9 +83,9 @@ xcodebuild \
   -scheme happymode \
   -configuration Debug \
   -sdk macosx \
-  build
-
-open build/Debug/happymode.app
+  CODE_SIGNING_ALLOWED=NO \
+  SYMROOT="$PWD/build" \
+  clean build
 ```
 
 ### Run tests
@@ -46,119 +94,37 @@ open build/Debug/happymode.app
 swift test
 ```
 
-### Homebrew install (tap)
+## Release
+
+Releases are automated with GitHub Actions on version tags (`v*`).
+
+1. Merge changes to `main`.
+2. Tag and push:
 
 ```bash
-brew tap happytoolin/happytap
-brew install --cask happymode
+git tag v0.0.3
+git push origin v0.0.3
 ```
 
-### First launch on macOS
+The release workflow publishes:
 
-If macOS blocks launch, use one of:
+- `happymode-vX.Y.Z.zip`
+- `happymode-vX.Y.Z.sha256`
+- `happymode-latest.zip`
 
-1. System Settings -> Privacy & Security -> Open Anyway
-2. Right-click `happymode.app` in Applications -> Open
+To auto-update the Homebrew tap cask, set repository secret:
 
-## Project structure
+- `TAP_GITHUB_TOKEN` (write access to `happytoolin/homebrew-happytap`)
 
-```text
-happymode/
-├── happymode.xcodeproj/
-├── happymode/
-│   ├── App/
-│   │   └── HappymodeApp.swift
-│   ├── Features/
-│   │   ├── MenuBar/
-│   │   │   └── MenuBarView.swift
-│   │   └── Settings/
-│   │       └── SettingsView.swift
-│   ├── Core/
-│   │   ├── Theme/
-│   │   │   └── ThemeController.swift
-│   │   └── Solar/
-│   │       ├── SolarCalculator.swift
-│   │       └── SolarPackage.swift
-│   ├── Resources/
-│   │   └── Assets.xcassets/
-│   └── Config/
-│       └── Info.plist
-├── scripts/
-│   └── create_project.rb
-├── Package.swift
-├── happymodeTests/
-│   └── AppearanceScheduleEngineTests.swift
-└── README.md
-```
-
-## Screenshots
-
-Add screenshots to `docs/screenshots/` with these file names:
-
-- `menu-bar.png`
-- `settings.png`
-
-Then this README will render them:
-
-![happymode menu bar](docs/screenshots/menu-bar.png)
-![happymode settings](docs/screenshots/settings.png)
-
-## Permissions and privacy
-
-- `Location Services`: required only when using `Auto` + `Sunrise/Sunset`.
-- `Automation -> System Events`: required to apply macOS Light/Dark mode.
-
-If location permission is denied, use manual latitude/longitude in `Options...`.
-
-## Build and release
-
-### Debug build
-
-```bash
-xcodebuild -project happymode.xcodeproj -scheme happymode -configuration Debug -sdk macosx build
-```
-
-### Release build
-
-```bash
-xcodebuild -project happymode.xcodeproj -scheme happymode -configuration Release -sdk macosx build
-```
-
-## CI/CD
-
-GitHub Actions workflows are included:
-
-- `CI` (`.github/workflows/ci.yml`): builds on every pull request and on pushes to `main`.
-- `Release` (`.github/workflows/release.yml`): runs when a tag like `v1.2.3` is pushed, builds a release artifact, publishes a GitHub Release, and updates the Homebrew tap cask.
-
-### Release flow
-
-1. Push changes to `main`.
-2. Create and push a version tag:
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-3. GitHub Actions will publish:
-   - `happymode-v1.0.0.zip`
-   - `happymode-v1.0.0.sha256`
-   - `happymode-latest.zip`
-
-### Required secret for tap updates
-
-Set this repository secret in GitHub:
-
-- `TAP_GITHUB_TOKEN`: a token with write access to `happytoolin/happytap`.
-
-If the secret is missing, release still succeeds, but tap update is skipped.
+If this secret is missing, the release still succeeds and tap update is skipped.
 
 ## Troubleshooting
 
-- App is blocked by macOS Gatekeeper:
-  - If launch is still blocked after "Open Anyway", run `xattr -dr com.apple.quarantine "/Applications/happymode.app"` and launch again.
 - App does not switch appearance:
-  - Open `Options...`, click `Grant` under Automation, and allow `happymode` in macOS Privacy settings.
-- Automatic location is unavailable:
-  - Grant Location permission or disable automatic location and set manual coordinates.
+  - Open `Options...`, grant Automation permission, and allow `happymode` under Privacy settings.
+- Sunrise/sunset schedule is unavailable:
+  - Grant Location permission or switch to manual coordinates/custom times.
+
+## License
+
+Licensed under [GNU GPL v3](LICENSE).

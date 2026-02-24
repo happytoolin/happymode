@@ -131,7 +131,7 @@ struct MenuBarView: View {
 
             Divider()
 
-            Text("Sunrise and sunset")
+            Text(scheduleSummaryTitle)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 2)
@@ -143,6 +143,15 @@ struct MenuBarView: View {
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.secondary.opacity(0.08))
         )
+    }
+
+    private var scheduleSummaryTitle: String {
+        switch controller.automaticScheduleMode {
+        case .sunriseSunset:
+            return "Sunrise and sunset"
+        case .customTimes:
+            return "Custom light/dark times"
+        }
     }
 
     private func metricValue(title: String, value: String, systemImage: String) -> some View {

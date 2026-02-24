@@ -61,13 +61,36 @@ enum AutomaticAppearanceDecision: Equatable {
 enum AppearanceScheduleEngine {
     static func evaluateSolar(now: Date,
                               today: SolarDayType,
-                              tomorrow: SolarDayType) -> AutomaticAppearanceDecision {
+                              tomorrow: SolarDayType,
+                              calendar: Calendar = .current) -> AutomaticAppearanceDecision {
         switch today {
         case .alwaysDark:
-            return .fixed(isDarkMode: true, message: "Polar night: staying in Dark mode.")
+            switch tomorrow {
+            case .normal(let nextSunrise, _):
+                return .transition(currentIsDarkMode: true, nextTransition: nextSunrise, nextIsDarkMode: false)
+            case .alwaysDark:
+                return .fixed(isDarkMode: true, message: "Polar night: staying in Dark mode.")
+            case .alwaysLight:
+                return .transition(
+                    currentIsDarkMode: true,
+                    nextTransition: startOfTomorrow(from: now, calendar: calendar),
+                    nextIsDarkMode: false
+                )
+            }
 
         case .alwaysLight:
-            return .fixed(isDarkMode: false, message: "Midnight sun: staying in Light mode.")
+            switch tomorrow {
+            case .normal(_, let nextSunset):
+                return .transition(currentIsDarkMode: false, nextTransition: nextSunset, nextIsDarkMode: true)
+            case .alwaysDark:
+                return .transition(
+                    currentIsDarkMode: false,
+                    nextTransition: startOfTomorrow(from: now, calendar: calendar),
+                    nextIsDarkMode: true
+                )
+            case .alwaysLight:
+                return .fixed(isDarkMode: false, message: "Midnight sun: staying in Light mode.")
+            }
 
         case .normal(let sunrise, let sunset):
             if now < sunrise {
@@ -84,9 +107,18 @@ enum AppearanceScheduleEngine {
             case .alwaysDark:
                 return .fixed(isDarkMode: true, message: "Polar night: staying in Dark mode.")
             case .alwaysLight:
-                return .fixed(isDarkMode: true, message: "Midnight sun tomorrow: Light mode.")
+                return .transition(
+                    currentIsDarkMode: true,
+                    nextTransition: startOfTomorrow(from: now, calendar: calendar),
+                    nextIsDarkMode: false
+                )
             }
         }
+    }
+
+    private static func startOfTomorrow(from now: Date, calendar: Calendar) -> Date {
+        let startOfToday = calendar.startOfDay(for: now)
+        return calendar.date(byAdding: .day, value: 1, to: startOfToday) ?? now
     }
 
     static func evaluateCustom(now: Date,
@@ -221,14 +253,18 @@ final class ThemeController: NSObject, ObservableObject {
     @Published var manualLatitudeText: String {
         didSet {
             defaults.set(manualLatitudeText, forKey: Self.manualLatitudeKey)
-            refreshNow(forceLocation: false)
+            if !isBatchUpdatingManualCoordinates {
+                refreshNow(forceLocation: false)
+            }
         }
     }
 
     @Published var manualLongitudeText: String {
         didSet {
             defaults.set(manualLongitudeText, forKey: Self.manualLongitudeKey)
-            refreshNow(forceLocation: false)
+            if !isBatchUpdatingManualCoordinates {
+                refreshNow(forceLocation: false)
+            }
         }
     }
 
@@ -391,6 +427,8 @@ final class ThemeController: NSObject, ObservableObject {
     private var latestCoordinate: CLLocationCoordinate2D?
     private var timer: Timer?
     private var lastLocationRequestDate: Date?
+    private var isBatchUpdatingManualCoordinates = false
+    private let timeFormatter: DateFormatter
 
     private var missingSetupLabels: [String] {
         var missing: [String] = []
@@ -444,8 +482,12 @@ final class ThemeController: NSObject, ObservableObject {
         self.manualLongitudeText = storedLongitude
         self.targetIsDarkMode = Self.systemIsCurrentlyDarkMode()
         self.locationAuthorizationStatus = CLLocationManager().authorizationStatus
+        self.timeFormatter = DateFormatter()
 
         super.init()
+
+        timeFormatter.timeStyle = .short
+        timeFormatter.dateStyle = .none
 
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers
@@ -523,8 +565,10 @@ final class ThemeController: NSObject, ObservableObject {
             return
         }
 
+        isBatchUpdatingManualCoordinates = true
         manualLatitudeText = String(format: "%.6f", coordinate.latitude)
         manualLongitudeText = String(format: "%.6f", coordinate.longitude)
+        isBatchUpdatingManualCoordinates = false
         refreshNow(forceLocation: false)
     }
 
@@ -815,10 +859,7 @@ final class ThemeController: NSObject, ObservableObject {
     }
 
     private func formatTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        formatter.dateStyle = .none
-        return formatter.string(from: date)
+        timeFormatter.string(from: date)
     }
 
     private func formatCoordinate(_ value: Double) -> String {

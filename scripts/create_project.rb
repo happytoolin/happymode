@@ -8,7 +8,7 @@ target = project.new_target(:application, 'happymode', :osx, '14.0')
 
 target.build_configurations.each do |config|
   config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.atlantic.happymode'
-  config.build_settings['SWIFT_VERSION'] = '5.0'
+  config.build_settings['SWIFT_VERSION'] = '5.10'
   config.build_settings['INFOPLIST_FILE'] = 'happymode/Config/Info.plist'
   config.build_settings['GENERATE_INFOPLIST_FILE'] = 'NO'
   config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '14.0'
