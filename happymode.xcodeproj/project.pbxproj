@@ -62,17 +62,89 @@
 		45B6D0D5BE294E20D7B5994E /* happymode */ = {
 			isa = PBXGroup;
 			children = (
-				4641BF3033696CA87BECCD7A /* HappymodeApp.swift */,
-				05DF75CBE1DB50C10F66E6AC /* MenuBarView.swift */,
-				64CA2B496F1DB06899315924 /* SettingsView.swift */,
-					B2A4DDCAF699250D5EF6012D /* ThemeController.swift */,
-					8E24B77649F24352D1540B80 /* SolarCalculator.swift */,
-					D1A1B2C3D4E5F60718293A4B /* SolarPackage.swift */,
-					58CBF4DB865C20A8A7F54B1F /* Assets.xcassets */,
-					0AE310D49E3691443537A7C3 /* Info.plist */,
-				);
+				AA11AA11AA11AA11AA11AA01 /* App */,
+				AA11AA11AA11AA11AA11AA02 /* Features */,
+				AA11AA11AA11AA11AA11AA05 /* Core */,
+				AA11AA11AA11AA11AA11AA08 /* Resources */,
+				AA11AA11AA11AA11AA11AA09 /* Config */,
+			);
 			name = happymode;
 			path = happymode;
+			sourceTree = "<group>";
+		};
+		AA11AA11AA11AA11AA11AA01 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				4641BF3033696CA87BECCD7A /* HappymodeApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		AA11AA11AA11AA11AA11AA02 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				AA11AA11AA11AA11AA11AA03 /* MenuBar */,
+				AA11AA11AA11AA11AA11AA04 /* Settings */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		AA11AA11AA11AA11AA11AA03 /* MenuBar */ = {
+			isa = PBXGroup;
+			children = (
+				05DF75CBE1DB50C10F66E6AC /* MenuBarView.swift */,
+			);
+			path = MenuBar;
+			sourceTree = "<group>";
+		};
+		AA11AA11AA11AA11AA11AA04 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				64CA2B496F1DB06899315924 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		AA11AA11AA11AA11AA11AA05 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				AA11AA11AA11AA11AA11AA06 /* Theme */,
+				AA11AA11AA11AA11AA11AA07 /* Solar */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		AA11AA11AA11AA11AA11AA06 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				B2A4DDCAF699250D5EF6012D /* ThemeController.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		AA11AA11AA11AA11AA11AA07 /* Solar */ = {
+			isa = PBXGroup;
+			children = (
+				8E24B77649F24352D1540B80 /* SolarCalculator.swift */,
+				D1A1B2C3D4E5F60718293A4B /* SolarPackage.swift */,
+			);
+			path = Solar;
+			sourceTree = "<group>";
+		};
+		AA11AA11AA11AA11AA11AA08 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				58CBF4DB865C20A8A7F54B1F /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		AA11AA11AA11AA11AA11AA09 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				0AE310D49E3691443537A7C3 /* Info.plist */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 		CDD7B2004449622C6993A502 /* OS X */ = {
@@ -295,7 +367,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = happymode/Info.plist;
+				INFOPLIST_FILE = happymode/Config/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -315,7 +387,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = happymode/Info.plist;
+				INFOPLIST_FILE = happymode/Config/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
