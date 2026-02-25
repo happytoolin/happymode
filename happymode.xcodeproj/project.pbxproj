@@ -15,6 +15,7 @@
 				80E107762F6C668AEB00D896 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 58CBF4DB865C20A8A7F54B1F /* Assets.xcassets */; };
 				A1AD099E16F3B4B7828CC2DA /* HappymodeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4641BF3033696CA87BECCD7A /* HappymodeApp.swift */; };
 			E1A1B2C3D4E5F60718293A4B /* SolarPackage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A1B2C3D4E5F60718293A4B /* SolarPackage.swift */; };
+			F1A2B3C4D5E6F78901234567 /* StatusItemController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* StatusItemController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 			B2A4DDCAF699250D5EF6012D /* ThemeController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ThemeController.swift; sourceTree = "<group>"; };
 			CFBF5AC0ED953AF3BBB168C1 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 			D1A1B2C3D4E5F60718293A4B /* SolarPackage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SolarPackage.swift; sourceTree = "<group>"; };
+			A1B2C3D4E5F6A7B8C9D0E1F2 /* StatusItemController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StatusItemController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,6 +78,7 @@
 			isa = PBXGroup;
 			children = (
 				4641BF3033696CA87BECCD7A /* HappymodeApp.swift */,
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* StatusItemController.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -238,6 +241,7 @@
 					0287722DE211E09938FC198F /* ThemeController.swift in Sources */,
 					39282ECC26B57104EA10FA07 /* SolarCalculator.swift in Sources */,
 					E1A1B2C3D4E5F60718293A4B /* SolarPackage.swift in Sources */,
+					F1A2B3C4D5E6F78901234567 /* StatusItemController.swift in Sources */,
 				);
 				runOnlyForDeploymentPostprocessing = 0;
 			};

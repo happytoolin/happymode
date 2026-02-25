@@ -34,16 +34,6 @@ enum AppearancePreference: String, CaseIterable, Identifiable {
         }
     }
 
-    var conditionTitle: String {
-        switch self {
-        case .automatic:
-            return "Automatic"
-        case .forceLight:
-            return "Forced Light mode"
-        case .forceDark:
-            return "Forced Night mode"
-        }
-    }
 }
 
 enum AutomaticScheduleMode: String, CaseIterable, Identifiable {
@@ -218,33 +208,27 @@ enum AppearanceScheduleEngine {
 }
 
 enum MenuBarStatusFormatter {
-    static func statusText(appearancePreference: AppearancePreference,
-                           nextTransitionDate: Date?,
-                           now: Date,
-                           showRemainingTimeInMenuBar: Bool) -> String {
-        guard showRemainingTimeInMenuBar else {
-            return ""
-        }
-
-        guard appearancePreference == .automatic,
-              let nextTransitionDate else {
-            return "happymode"
-        }
-
-        return remainingTime(until: nextTransitionDate, now: now)
-    }
+    private static let formatter: DateComponentsFormatter = {
+        let f = DateComponentsFormatter()
+        f.allowedUnits = [.hour, .minute]
+        f.unitsStyle = .abbreviated
+        f.zeroFormattingBehavior = .dropLeading
+        return f
+    }()
 
     static func remainingTime(until date: Date, now: Date) -> String {
-        let seconds = max(0, Int(date.timeIntervalSince(now)))
-        let totalMinutes = (seconds + 59) / 60
-        let hours = totalMinutes / 60
-        let minutes = totalMinutes % 60
+        let interval = max(60, ceil(date.timeIntervalSince(now) / 60) * 60)
+        return formatter.string(from: interval) ?? "0 min"
+    }
 
-        if hours > 0 {
-            return "\(hours)h \(minutes)m"
-        }
-
-        return "\(minutes)m"
+    static func statusText(appearancePreference: AppearancePreference,
+                            nextTransitionDate: Date?,
+                            now: Date,
+                            showRemainingTimeInMenuBar: Bool) -> String {
+        guard showRemainingTimeInMenuBar else { return "" }
+        guard appearancePreference == .automatic else { return "happymode" }
+        guard let next = nextTransitionDate else { return "happymode" }
+        return remainingTime(until: next, now: now)
     }
 }
 
@@ -304,22 +288,32 @@ final class ThemeController: NSObject, ObservableObject {
     @Published var showRemainingTimeInMenuBar: Bool {
         didSet {
             defaults.set(showRemainingTimeInMenuBar, forKey: Self.showRemainingTimeInMenuBarKey)
-            updateMenuBarStatus(now: Date())
+            let now = Date()
+            updateMenuBarCountdownText(now: now)
+            scheduleMenuBarCountdownUpdate(now: now)
         }
     }
 
-    @Published var manualLatitudeText: String {
+    @Published var manualLatitude: Double? {
         didSet {
-            defaults.set(manualLatitudeText, forKey: Self.manualLatitudeKey)
+            if let manualLatitude {
+                defaults.set(manualLatitude, forKey: Self.manualLatitudeKey)
+            } else {
+                defaults.removeObject(forKey: Self.manualLatitudeKey)
+            }
             if !isBatchUpdatingManualCoordinates {
                 refreshNow(forceLocation: false)
             }
         }
     }
 
-    @Published var manualLongitudeText: String {
+    @Published var manualLongitude: Double? {
         didSet {
-            defaults.set(manualLongitudeText, forKey: Self.manualLongitudeKey)
+            if let manualLongitude {
+                defaults.set(manualLongitude, forKey: Self.manualLongitudeKey)
+            } else {
+                defaults.removeObject(forKey: Self.manualLongitudeKey)
+            }
             if !isBatchUpdatingManualCoordinates {
                 refreshNow(forceLocation: false)
             }
@@ -327,9 +321,9 @@ final class ThemeController: NSObject, ObservableObject {
     }
 
     @Published private(set) var targetIsDarkMode: Bool
-    @Published private(set) var menuBarStatusText: String = "happymode"
     @Published private(set) var nextTransitionText: String = "Calculating schedule..."
     @Published private(set) var nextTransitionDate: Date?
+    @Published private(set) var menuBarCountdownText: String = ""
     @Published private(set) var locationStatusText: String = "Detecting location..."
     @Published private(set) var currentSunriseText: String = "--"
     @Published private(set) var currentSunsetText: String = "--"
@@ -343,20 +337,16 @@ final class ThemeController: NSObject, ObservableObject {
         manualCoordinates != nil
     }
 
+    var hasManualCoordinateInput: Bool {
+        manualLatitude != nil || manualLongitude != nil
+    }
+
     var hasDetectedCoordinate: Bool {
         latestCoordinate != nil
     }
 
     var detectedCoordinateText: String? {
         guard let coordinate = latestCoordinate else {
-            return nil
-        }
-
-        return "\(formatCoordinate(coordinate.latitude)), \(formatCoordinate(coordinate.longitude))"
-    }
-
-    var activeCoordinateText: String? {
-        guard let coordinate = resolvedCoordinate() else {
             return nil
         }
 
@@ -379,13 +369,10 @@ final class ThemeController: NSObject, ObservableObject {
         }
     }
 
-    var nextTransitionRemainingText: String {
-        guard appearancePreference == .automatic,
-              let nextTransitionDate else {
-            return nextTransitionText
-        }
-
-        return MenuBarStatusFormatter.remainingTime(until: nextTransitionDate, now: Date())
+    var shouldShowMenuBarCountdown: Bool {
+        showRemainingTimeInMenuBar &&
+            appearancePreference == .automatic &&
+            nextTransitionDate != nil
     }
 
     var isLocationAuthorized: Bool {
@@ -493,10 +480,10 @@ final class ThemeController: NSObject, ObservableObject {
     private let defaults = UserDefaults.standard
     private let locationManager = CLLocationManager()
     private var latestCoordinate: CLLocationCoordinate2D?
-    private var timer: Timer?
+    private var scheduledRefreshTask: Task<Void, Never>?
+    private var menuBarCountdownTask: Task<Void, Never>?
     private var lastLocationRequestDate: Date?
     private var isBatchUpdatingManualCoordinates = false
-    private let timeFormatter: DateFormatter
 
     private var missingSetupLabels: [String] {
         var missing: [String] = []
@@ -536,8 +523,8 @@ final class ThemeController: NSObject, ObservableObject {
         let storedAutomatic = defaults.object(forKey: Self.automaticLocationKey) as? Bool ?? true
         let storedPreference = AppearancePreference(rawValue: defaults.string(forKey: Self.appearancePreferenceKey) ?? "") ?? .automatic
         let storedScheduleMode = AutomaticScheduleMode(rawValue: defaults.string(forKey: Self.automaticScheduleModeKey) ?? "") ?? .sunriseSunset
-        let storedLatitude = defaults.string(forKey: Self.manualLatitudeKey) ?? ""
-        let storedLongitude = defaults.string(forKey: Self.manualLongitudeKey) ?? ""
+        let storedLatitude = Self.storedCoordinateValue(defaults: defaults, key: Self.manualLatitudeKey)
+        let storedLongitude = Self.storedCoordinateValue(defaults: defaults, key: Self.manualLongitudeKey)
         let storedLightMinutes = defaults.object(forKey: Self.customLightMinutesKey) as? Int ?? Self.defaultCustomLightMinutes
         let storedDarkMinutes = defaults.object(forKey: Self.customDarkMinutesKey) as? Int ?? Self.defaultCustomDarkMinutes
         let storedShowRemainingTime = defaults.object(forKey: Self.showRemainingTimeInMenuBarKey) as? Bool ?? true
@@ -548,16 +535,12 @@ final class ThemeController: NSObject, ObservableObject {
         self.customLightTime = Self.dateFromMinutesSinceMidnight(storedLightMinutes)
         self.customDarkTime = Self.dateFromMinutesSinceMidnight(storedDarkMinutes)
         self.showRemainingTimeInMenuBar = storedShowRemainingTime
-        self.manualLatitudeText = storedLatitude
-        self.manualLongitudeText = storedLongitude
+        self.manualLatitude = storedLatitude
+        self.manualLongitude = storedLongitude
         self.targetIsDarkMode = Self.systemIsCurrentlyDarkMode()
         self.locationAuthorizationStatus = CLLocationManager().authorizationStatus
-        self.timeFormatter = DateFormatter()
 
         super.init()
-
-        timeFormatter.timeStyle = .short
-        timeFormatter.dateStyle = .none
 
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers
@@ -569,18 +552,12 @@ final class ThemeController: NSObject, ObservableObject {
             object: nil
         )
 
-        timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.refreshNow(forceLocation: false)
-            }
-        }
-
         refreshNow(forceLocation: true)
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
-        timer?.invalidate()
+        scheduledRefreshTask?.cancel()
+        menuBarCountdownTask?.cancel()
     }
 
     @objc private func calendarDayChanged() {
@@ -632,8 +609,8 @@ final class ThemeController: NSObject, ObservableObject {
         }
 
         isBatchUpdatingManualCoordinates = true
-        manualLatitudeText = String(format: "%.6f", coordinate.latitude)
-        manualLongitudeText = String(format: "%.6f", coordinate.longitude)
+        manualLatitude = coordinate.latitude
+        manualLongitude = coordinate.longitude
         isBatchUpdatingManualCoordinates = false
         refreshNow(forceLocation: false)
     }
@@ -650,7 +627,11 @@ final class ThemeController: NSObject, ObservableObject {
 
         if automaticScheduleMode == .sunriseSunset {
             if let coordinate {
-                locationStatusText = "Using location: \(formatCoordinate(coordinate.latitude)), \(formatCoordinate(coordinate.longitude))"
+                if latestCoordinate != nil && useAutomaticLocation {
+                    locationStatusText = "Using detected location"
+                } else {
+                    locationStatusText = "Using manual coordinates"
+                }
                 updateWeeklyForecast(for: coordinate, from: now)
             } else {
                 locationStatusText = useAutomaticLocation
@@ -668,7 +649,9 @@ final class ThemeController: NSObject, ObservableObject {
         }
 
         evaluateAndApply(for: coordinate, at: now)
-        updateMenuBarStatus(now: now)
+        updateMenuBarCountdownText(now: now)
+        scheduleMenuBarCountdownUpdate(now: now)
+        scheduleNextRefresh(now: now)
     }
 
     private func requestLocationIfPossible(force: Bool) {
@@ -713,8 +696,8 @@ final class ThemeController: NSObject, ObservableObject {
     }
 
     private var manualCoordinates: CLLocationCoordinate2D? {
-        guard let latitude = Double(manualLatitudeText.trimmingCharacters(in: .whitespacesAndNewlines)),
-              let longitude = Double(manualLongitudeText.trimmingCharacters(in: .whitespacesAndNewlines)),
+        guard let latitude = manualLatitude,
+              let longitude = manualLongitude,
               (-90 ... 90).contains(latitude),
               (-180 ... 180).contains(longitude) else {
             return nil
@@ -819,24 +802,98 @@ final class ThemeController: NSObject, ObservableObject {
 
         case .transition(let currentIsDarkMode, let nextTransition, let nextIsDarkMode):
             targetIsDarkMode = currentIsDarkMode
-            let remainingText = formatRemainingTime(until: nextTransition, now: now)
-            nextTransitionText = "Next: \(formatTime(nextTransition)) (\(remainingText)) -> \(nextIsDarkMode ? "Dark" : "Light") mode"
+            nextTransitionText = "Next: \(formatTime(nextTransition)) -> \(nextIsDarkMode ? "Dark" : "Light") mode"
             nextTransitionDate = nextTransition
             applyAppearanceIfNeeded(darkMode: currentIsDarkMode)
         }
     }
 
-    private func updateMenuBarStatus(now: Date) {
-        menuBarStatusText = MenuBarStatusFormatter.statusText(
-            appearancePreference: appearancePreference,
-            nextTransitionDate: nextTransitionDate,
-            now: now,
-            showRemainingTimeInMenuBar: showRemainingTimeInMenuBar
-        )
+    private func scheduleNextRefresh(now: Date) {
+        scheduledRefreshTask?.cancel()
+        scheduledRefreshTask = nil
+
+        var candidates: [Date] = []
+
+        if appearancePreference == .automatic, let nextTransitionDate {
+            candidates.append(nextTransitionDate)
+        }
+
+        if useAutomaticLocation,
+           requiresLocationForActiveSchedule,
+           let lastLocationRequestDate {
+            candidates.append(lastLocationRequestDate.addingTimeInterval(60 * 30))
+        }
+
+        guard let nextRefreshDate = candidates.filter({ $0 > now }).min() else {
+            return
+        }
+
+        let delay = nextRefreshDate.timeIntervalSince(now)
+        guard delay > 0 else {
+            refreshNow(forceLocation: false)
+            return
+        }
+
+        scheduledRefreshTask = Task { [weak self] in
+            do {
+                try await Task.sleep(for: .seconds(delay))
+            } catch {
+                return
+            }
+
+            await MainActor.run {
+                self?.refreshNow(forceLocation: false)
+            }
+        }
     }
 
-    private func formatRemainingTime(until date: Date, now: Date) -> String {
-        MenuBarStatusFormatter.remainingTime(until: date, now: now)
+    private func updateMenuBarCountdownText(now: Date) {
+        guard shouldShowMenuBarCountdown,
+              let nextTransitionDate else {
+            menuBarCountdownText = ""
+            return
+        }
+
+        menuBarCountdownText = MenuBarStatusFormatter.remainingTime(until: nextTransitionDate, now: now)
+    }
+
+    private func scheduleMenuBarCountdownUpdate(now: Date) {
+        menuBarCountdownTask?.cancel()
+        menuBarCountdownTask = nil
+
+        guard shouldShowMenuBarCountdown,
+              let nextTransitionDate else {
+            return
+        }
+
+        let remainder = now.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 60)
+        let secondsToNextMinute = remainder == 0 ? 60 : 60 - remainder
+        let nextUpdateDate = min(nextTransitionDate, now.addingTimeInterval(secondsToNextMinute))
+        let delay = nextUpdateDate.timeIntervalSince(now)
+
+        guard delay > 0 else {
+            let current = Date()
+            updateMenuBarCountdownText(now: current)
+            scheduleMenuBarCountdownUpdate(now: current)
+            return
+        }
+
+        menuBarCountdownTask = Task { [weak self] in
+            do {
+                try await Task.sleep(for: .seconds(delay))
+            } catch {
+                return
+            }
+
+            await MainActor.run {
+                guard let self else {
+                    return
+                }
+                let now = Date()
+                self.updateMenuBarCountdownText(now: now)
+                self.scheduleMenuBarCountdownUpdate(now: now)
+            }
+        }
     }
 
     private func applyAppearanceIfNeeded(darkMode: Bool) {
@@ -893,9 +950,7 @@ final class ThemeController: NSObject, ObservableObject {
     }
 
     private static func systemIsCurrentlyDarkMode() -> Bool {
-        let globalDomain = UserDefaults.standard.persistentDomain(forName: UserDefaults.globalDomain)
-        let style = globalDomain?["AppleInterfaceStyle"] as? String
-        return style == "Dark"
+        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
     }
 
     private static func minutesSinceMidnight(for date: Date, calendar: Calendar = .current) -> Int {
@@ -916,11 +971,23 @@ final class ThemeController: NSObject, ObservableObject {
     }
 
     private func formatTime(_ date: Date) -> String {
-        timeFormatter.string(from: date)
+        date.formatted(date: .omitted, time: .shortened)
     }
 
     private func formatCoordinate(_ value: Double) -> String {
-        String(format: "%.4f", value)
+        String(format: "%.2f", value)
+    }
+
+    private static func storedCoordinateValue(defaults: UserDefaults, key: String) -> Double? {
+        if let numeric = defaults.object(forKey: key) as? NSNumber {
+            return numeric.doubleValue
+        }
+
+        if let text = defaults.string(forKey: key) {
+            return Double(text.trimmingCharacters(in: .whitespacesAndNewlines))
+        }
+
+        return nil
     }
 }
 

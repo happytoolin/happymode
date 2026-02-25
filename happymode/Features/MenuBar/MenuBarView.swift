@@ -3,7 +3,7 @@ import SwiftUI
 
 struct MenuBarView: View {
     @ObservedObject var controller: ThemeController
-    let openSettingsWindow: () -> Void
+    var onOpenSettings: () -> Void = {}
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -17,9 +17,6 @@ struct MenuBarView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-
-                Toggle("Show countdown in menu bar", isOn: $controller.showRemainingTimeInMenuBar)
-                    .toggleStyle(.switch)
             }
 
             sectionCard(title: "Today") {
@@ -27,23 +24,34 @@ struct MenuBarView: View {
                     Text("Next switch")
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text(controller.nextTransitionRemainingText)
-                        .fontWeight(.semibold)
+                    if controller.appearancePreference == .automatic,
+                       let nextTransitionDate = controller.nextTransitionDate {
+                        Text(nextTransitionDate, style: .timer)
+                            .monospacedDigit()
+                            .fontWeight(.semibold)
+                    } else {
+                        Text(controller.nextTransitionText)
+                            .fontWeight(.semibold)
+                    }
                 }
 
                 Divider()
 
-                statusRow(
-                    title: controller.transitionStartTitle,
-                    value: controller.currentSunriseText,
-                    systemImage: controller.transitionStartSymbol
-                )
+                LabeledContent {
+                    Text(controller.currentSunriseText)
+                        .fontWeight(.semibold)
+                } label: {
+                    Label(controller.transitionStartTitle, systemImage: controller.transitionStartSymbol)
+                        .foregroundStyle(.secondary)
+                }
 
-                statusRow(
-                    title: controller.transitionEndTitle,
-                    value: controller.currentSunsetText,
-                    systemImage: controller.transitionEndSymbol
-                )
+                LabeledContent {
+                    Text(controller.currentSunsetText)
+                        .fontWeight(.semibold)
+                } label: {
+                    Label(controller.transitionEndTitle, systemImage: controller.transitionEndSymbol)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             if controller.setupNeeded {
@@ -63,24 +71,26 @@ struct MenuBarView: View {
             }
 
             HStack(spacing: 8) {
-                Button("Refresh") {
+                Button {
                     controller.refreshNow(forceLocation: true)
+                } label: {
+                    Label("Refresh", systemImage: "arrow.clockwise")
                 }
 
                 Spacer(minLength: 0)
 
-                Button("Settings…") {
-                    openSettingsWindow()
-                }
+                Button("Settings…", action: onOpenSettings)
+                    .keyboardShortcut(",", modifiers: .command)
 
-                Button("Quit", role: .destructive) {
+                Button("Quit") {
                     NSApplication.shared.terminate(nil)
                 }
+                .keyboardShortcut("q", modifiers: .command)
             }
             .controlSize(.small)
         }
         .padding(12)
-        .frame(width: 380)
+        .frame(width: 320)
     }
 
     private var header: some View {
@@ -125,15 +135,5 @@ struct MenuBarView: View {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(Color.secondary.opacity(0.12))
         )
-    }
-
-    private func statusRow(title: String, value: String, systemImage: String) -> some View {
-        HStack {
-            Label(title, systemImage: systemImage)
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text(value)
-                .fontWeight(.semibold)
-        }
     }
 }

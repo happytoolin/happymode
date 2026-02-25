@@ -5,44 +5,54 @@ struct SettingsView: View {
 
     var body: some View {
         TabView {
-            GeneralSettingsPane(controller: controller)
-                .tabItem {
-                    Label("General", systemImage: "gearshape")
-                }
+            Tab("General", systemImage: "gearshape") {
+                GeneralSettingsPane(controller: controller)
+            }
 
-            ScheduleSettingsPane(controller: controller)
-                .tabItem {
-                    Label("Schedule", systemImage: "clock")
-                }
+            Tab("Schedule", systemImage: "clock") {
+                ScheduleSettingsPane(controller: controller)
+            }
 
-            LocationSettingsPane(controller: controller)
-                .tabItem {
-                    Label("Location", systemImage: "location")
-                }
+            Tab("Location", systemImage: "location") {
+                LocationSettingsPane(controller: controller)
+            }
 
-            PermissionsSettingsPane(controller: controller)
-                .tabItem {
-                    Label("Permissions", systemImage: "checkmark.shield")
-                }
-        }
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    controller.refreshNow(forceLocation: true)
-                } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                }
+            Tab("Permissions", systemImage: "checkmark.shield") {
+                PermissionsSettingsPane(controller: controller)
             }
         }
-        .frame(minWidth: 760, minHeight: 600)
+        .frame(minWidth: 480, minHeight: 360)
     }
 }
 
-private struct GeneralSettingsPane: View {
+struct GeneralSettingsPane: View {
     @ObservedObject var controller: ThemeController
+
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+    }
 
     var body: some View {
         Form {
+            Section {
+                HStack(spacing: 12) {
+                    Image("Logo")
+                        .resizable()
+                        .interpolation(.high)
+                        .frame(width: 48, height: 48)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("happymode")
+                            .font(.title3.bold())
+                        Text("Version \(appVersion)")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+
             Section {
                 Picker("Appearance", selection: $controller.appearancePreference) {
                     ForEach(AppearancePreference.menuOrder) { preference in
@@ -52,59 +62,27 @@ private struct GeneralSettingsPane: View {
                 }
                 .pickerStyle(.segmented)
 
-                Toggle("Show remaining time in menu bar", isOn: $controller.showRemainingTimeInMenuBar)
-
                 LabeledContent {
                     Text(controller.targetIsDarkMode ? "Dark" : "Light")
                 } label: {
                     Label("Current mode", systemImage: "circle.lefthalf.filled")
-                }
-
-                LabeledContent {
-                    Text(controller.appearanceDescriptionText)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.trailing)
-                } label: {
-                    Label("Description", systemImage: "text.alignleft")
                 }
             } header: {
                 Label("Appearance", systemImage: "sun.max")
             }
 
             Section {
+                Toggle("Show remaining time in menu bar", isOn: $controller.showRemainingTimeInMenuBar)
+
                 LabeledContent {
                     Text(controller.nextTransitionText)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.trailing)
                 } label: {
                     Label("Next switch", systemImage: "timer")
                 }
-
-                statusRow(
-                    title: controller.transitionStartTitle,
-                    value: controller.currentSunriseText,
-                    systemImage: controller.transitionStartSymbol
-                )
-                statusRow(
-                    title: controller.transitionEndTitle,
-                    value: controller.currentSunsetText,
-                    systemImage: controller.transitionEndSymbol
-                )
-
-                LabeledContent {
-                    Text(controller.locationStatusText)
-                } label: {
-                    Label("Location status", systemImage: "location.circle")
-                }
-
-                if let activeCoordinate = controller.activeCoordinateText {
-                    LabeledContent {
-                        Text(activeCoordinate)
-                    } label: {
-                        Label("Active coordinates", systemImage: "map")
-                    }
-                }
             } header: {
-                Label("Status", systemImage: "waveform.path.ecg")
+                Label("Menu Bar", systemImage: "menubar.rectangle")
             }
 
             if let errorText = controller.errorText {
@@ -118,18 +96,9 @@ private struct GeneralSettingsPane: View {
         }
         .formStyle(.grouped)
     }
-
-    private func statusRow(title: String, value: String, systemImage: String) -> some View {
-        HStack {
-            Label(title, systemImage: systemImage)
-            Spacer()
-            Text(value)
-                .foregroundStyle(.secondary)
-        }
-    }
 }
 
-private struct ScheduleSettingsPane: View {
+struct ScheduleSettingsPane: View {
     @ObservedObject var controller: ThemeController
 
     var body: some View {
@@ -201,7 +170,7 @@ private struct ScheduleSettingsPane: View {
     }
 }
 
-private struct LocationSettingsPane: View {
+struct LocationSettingsPane: View {
     @ObservedObject var controller: ThemeController
 
     var body: some View {
@@ -213,56 +182,51 @@ private struct LocationSettingsPane: View {
                     LabeledContent("Detected", value: detected)
                 }
 
+                LabeledContent {
+                    Text(controller.locationStatusText)
+                        .foregroundStyle(.secondary)
+                } label: {
+                    Text("Source")
+                }
+            } header: {
+                Label("Location", systemImage: "location")
+            }
+
+            Section {
                 HStack(spacing: 12) {
-                    TextField("Latitude", text: $controller.manualLatitudeText)
-                    TextField("Longitude", text: $controller.manualLongitudeText)
+                    TextField(
+                        "Latitude",
+                        value: $controller.manualLatitude,
+                        format: .number.precision(.fractionLength(0 ... 4))
+                    )
+                    TextField(
+                        "Longitude",
+                        value: $controller.manualLongitude,
+                        format: .number.precision(.fractionLength(0 ... 4))
+                    )
                 }
 
-                if (!controller.manualLatitudeText.isEmpty || !controller.manualLongitudeText.isEmpty) && !controller.manualCoordinatesAreValid {
-                    Text("Coordinates must be valid: latitude -90...90 and longitude -180...180.")
+                if controller.hasManualCoordinateInput && !controller.manualCoordinatesAreValid {
+                    Text("Latitude must be -90...90, longitude -180...180.")
+                        .font(.footnote)
                         .foregroundStyle(.red)
                 }
 
                 HStack(spacing: 8) {
-                    Button("Use detected") {
+                    Button("Copy from detected") {
                         controller.fillManualCoordinatesFromDetected()
                     }
                     .disabled(!controller.hasDetectedCoordinate)
-
-                    Button("Refresh current location") {
-                        controller.refreshNow(forceLocation: true)
-                    }
-                    .disabled(!controller.useAutomaticLocation)
                 }
             } header: {
-                Label("Coordinates", systemImage: "location")
-            }
-
-            Section {
-                LabeledContent {
-                    Text(controller.locationStatusText)
-                } label: {
-                    Label("Resolved source", systemImage: "scope")
-                }
-
-                LabeledContent {
-                    Text(controller.locationPermissionText)
-                } label: {
-                    Label("Permission", systemImage: "lock.shield")
-                }
-
-                Button("Open Location Privacy") {
-                    controller.openLocationPrivacySettings()
-                }
-            } header: {
-                Label("Location Status", systemImage: "location.circle")
+                Label("Manual Coordinates", systemImage: "map")
             }
         }
         .formStyle(.grouped)
     }
 }
 
-private struct PermissionsSettingsPane: View {
+struct PermissionsSettingsPane: View {
     @ObservedObject var controller: ThemeController
 
     var body: some View {
