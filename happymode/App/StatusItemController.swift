@@ -5,6 +5,7 @@ import SwiftUI
 @MainActor
 final class StatusItemController: NSObject, ObservableObject {
     let controller = ThemeController()
+    let updateController = AppUpdateController()
 
     private var statusItem: NSStatusItem!
     private let popover = NSPopover()
@@ -16,6 +17,10 @@ final class StatusItemController: NSObject, ObservableObject {
         setupStatusItem()
         setupPopover()
         observeChanges()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            self?.updateController.checkForUpdatesIfNeeded()
+        }
     }
 
     // MARK: - Setup
@@ -84,6 +89,10 @@ final class StatusItemController: NSObject, ObservableObject {
         settingsItem.target = self
         menu.addItem(settingsItem)
 
+        let checkUpdatesItem = NSMenuItem(title: "Check for Updates...", action: #selector(checkForUpdates), keyEquivalent: "")
+        checkUpdatesItem.target = self
+        menu.addItem(checkUpdatesItem)
+
         menu.addItem(.separator())
 
         let quitItem = NSMenuItem(title: "Quit happymode", action: #selector(quit), keyEquivalent: "q")
@@ -104,6 +113,10 @@ final class StatusItemController: NSObject, ObservableObject {
         dismissAndOpenSettings()
     }
 
+    @objc private func checkForUpdates() {
+        updateController.checkForUpdates(userInitiated: true)
+    }
+
     private func dismissAndOpenSettings() {
         popover.performClose(nil)
 
@@ -114,7 +127,7 @@ final class StatusItemController: NSObject, ObservableObject {
         }
 
         let hostingController = NSHostingController(
-            rootView: SettingsView(controller: controller)
+            rootView: SettingsView(controller: controller, updateController: updateController)
         )
 
         let window = NSWindow(contentViewController: hostingController)
@@ -167,5 +180,174 @@ final class StatusItemController: NSObject, ObservableObject {
                 }
             }
             .store(in: &cancellables)
+    }
+}
+
+@MainActor
+final class AppUpdateController: ObservableObject {
+    @Published private(set) var isChecking = false
+
+    private static let latestReleaseAPIURL = URL(string: "https://api.github.com/repos/happytoolin/happymode/releases/latest")!
+    private static let lastCheckedDateKey = "happymode.update.lastCheckedDate"
+    private static let githubUserAgent = "happymode-updater"
+
+    private let session: URLSession
+    private let defaults: UserDefaults
+    private var hasPresentedAutomaticAlertThisLaunch = false
+
+    init(session: URLSession = .shared, defaults: UserDefaults = .standard) {
+        self.session = session
+        self.defaults = defaults
+    }
+
+    func checkForUpdatesIfNeeded() {
+        if let lastChecked = defaults.object(forKey: Self.lastCheckedDateKey) as? Date,
+           Calendar.current.isDate(lastChecked, inSameDayAs: Date()) {
+            return
+        }
+
+        checkForUpdates(userInitiated: false)
+    }
+
+    func checkForUpdates(userInitiated: Bool) {
+        guard !isChecking else { return }
+        isChecking = true
+
+        Task { [weak self] in
+            guard let self else { return }
+            defer { self.isChecking = false }
+
+            do {
+                let release = try await self.fetchLatestRelease()
+                self.defaults.set(Date(), forKey: Self.lastCheckedDateKey)
+                self.handleReleaseCheckResult(release, userInitiated: userInitiated)
+            } catch {
+                guard userInitiated else { return }
+                self.presentFailureAlert(message: error.localizedDescription)
+            }
+        }
+    }
+
+    private func fetchLatestRelease() async throws -> GitHubRelease {
+        var request = URLRequest(url: Self.latestReleaseAPIURL)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        request.setValue(Self.githubUserAgent, forHTTPHeaderField: "User-Agent")
+
+        let (data, response) = try await session.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw UpdateError.invalidResponse
+        }
+
+        guard (200 ... 299).contains(httpResponse.statusCode) else {
+            throw UpdateError.httpStatus(httpResponse.statusCode)
+        }
+
+        do {
+            return try JSONDecoder().decode(GitHubRelease.self, from: data)
+        } catch {
+            throw UpdateError.invalidPayload
+        }
+    }
+
+    private func handleReleaseCheckResult(_ release: GitHubRelease, userInitiated: Bool) {
+        let currentVersion = normalizedVersionString(currentAppVersion)
+        let latestVersion = normalizedVersionString(release.tagName)
+
+        if latestVersion.compare(currentVersion, options: .numeric) == .orderedDescending {
+            if !userInitiated && hasPresentedAutomaticAlertThisLaunch {
+                return
+            }
+
+            hasPresentedAutomaticAlertThisLaunch = true
+            presentUpdateAvailableAlert(
+                latestVersion: latestVersion,
+                currentVersion: currentVersion,
+                releaseURL: release.releaseURL
+            )
+            return
+        }
+
+        if userInitiated {
+            presentUpToDateAlert(version: currentVersion)
+        }
+    }
+
+    private var currentAppVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
+    }
+
+    private func normalizedVersionString(_ version: String) -> String {
+        let trimmed = version.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.lowercased().hasPrefix("v") else {
+            return trimmed
+        }
+        return String(trimmed.dropFirst())
+    }
+
+    private func presentUpdateAvailableAlert(latestVersion: String, currentVersion: String, releaseURL: URL) {
+        let alert = NSAlert()
+        alert.alertStyle = .informational
+        alert.messageText = "Update Available"
+        alert.informativeText = "happymode \(latestVersion) is available. You are currently on \(currentVersion)."
+        alert.addButton(withTitle: "Download")
+        alert.addButton(withTitle: "Later")
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            NSWorkspace.shared.open(releaseURL)
+        }
+    }
+
+    private func presentUpToDateAlert(version: String) {
+        let alert = NSAlert()
+        alert.alertStyle = .informational
+        alert.messageText = "You're Up to Date"
+        alert.informativeText = "happymode \(version) is currently installed."
+        alert.addButton(withTitle: "OK")
+        _ = alert.runModal()
+    }
+
+    private func presentFailureAlert(message: String) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Unable to Check for Updates"
+        alert.informativeText = "Please try again later.\n\(message)"
+        alert.addButton(withTitle: "OK")
+        _ = alert.runModal()
+    }
+
+    private struct GitHubRelease: Decodable {
+        private static let fallbackURL = URL(string: "https://github.com/happytoolin/happymode/releases/latest")!
+
+        let tagName: String
+        let htmlURLString: String?
+
+        var releaseURL: URL {
+            if let htmlURLString, let url = URL(string: htmlURLString) {
+                return url
+            }
+            return Self.fallbackURL
+        }
+
+        enum CodingKeys: String, CodingKey {
+            case tagName = "tag_name"
+            case htmlURLString = "html_url"
+        }
+    }
+
+    private enum UpdateError: LocalizedError {
+        case invalidResponse
+        case httpStatus(Int)
+        case invalidPayload
+
+        var errorDescription: String? {
+            switch self {
+            case .invalidResponse:
+                return "The update server returned an invalid response."
+            case .httpStatus(let status):
+                return "The update server returned status code \(status)."
+            case .invalidPayload:
+                return "The update data could not be read."
+            }
+        }
     }
 }

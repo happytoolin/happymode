@@ -1,7 +1,9 @@
+import AppKit
 import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var controller: ThemeController
+    @ObservedObject var updateController: AppUpdateController
 
     var body: some View {
         TabView {
@@ -19,6 +21,10 @@ struct SettingsView: View {
 
             Tab("Permissions", systemImage: "checkmark.shield") {
                 PermissionsSettingsPane(controller: controller)
+            }
+
+            Tab("About", systemImage: "info.circle") {
+                AboutSettingsPane(updateController: updateController)
             }
         }
         .frame(minWidth: 480, minHeight: 360)
@@ -264,6 +270,84 @@ struct PermissionsSettingsPane: View {
                     .foregroundStyle(.secondary)
             } header: {
                 Label("Setup Status", systemImage: "info.circle")
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
+struct AboutSettingsPane: View {
+    @ObservedObject var updateController: AppUpdateController
+
+    private let githubURL = URL(string: "https://github.com/happytoolin/happymode")!
+    private let websiteURL = URL(string: "https://happytoolin.com")!
+
+    private var appName: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "happymode"
+    }
+
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+    }
+
+    private var appBuild: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                HStack(spacing: 12) {
+                    Image("Logo")
+                        .resizable()
+                        .interpolation(.high)
+                        .frame(width: 48, height: 48)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(appName)
+                            .font(.title3.bold())
+                        Text("Version \(appVersion) (\(appBuild))")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+
+            Section {
+                LabeledContent("GitHub") {
+                    Link("github.com/happytoolin/happymode", destination: githubURL)
+                }
+
+                LabeledContent("Website") {
+                    Link("happytoolin.com", destination: websiteURL)
+                }
+            } header: {
+                Label("Links", systemImage: "link")
+            }
+
+            Section {
+                HStack(spacing: 10) {
+                    Button(updateController.isChecking ? "Checking..." : "Check for Updates...") {
+                        updateController.checkForUpdates(userInitiated: true)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(updateController.isChecking)
+
+                    if updateController.isChecking {
+                        ProgressView()
+                            .controlSize(.small)
+                    }
+
+                    Button("Open Native About Panel") {
+                        NSApp.orderFrontStandardAboutPanel(options: [:])
+                        NSApp.activate(ignoringOtherApps: true)
+                    }
+                    .buttonStyle(.bordered)
+                }
+            } header: {
+                Label("Software Update", systemImage: "arrow.triangle.2.circlepath")
             }
         }
         .formStyle(.grouped)
