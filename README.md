@@ -71,7 +71,7 @@ If location is denied, disable automatic location and set manual latitude/longit
 
 ### Requirements
 
-- macOS 14+
+- macOS 15+
 - Xcode 16+
 - Swift 5.10+
 

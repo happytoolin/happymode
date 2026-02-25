@@ -1,158 +1,65 @@
 import AppKit
-import Combine
 import SwiftUI
 
 @main
 struct HappymodeApp: App {
-    @StateObject private var controller: ThemeController
-    private let statusBarController: StatusBarController
-
-    init() {
-        let themeController = ThemeController()
-        _controller = StateObject(wrappedValue: themeController)
-        statusBarController = StatusBarController(themeController: themeController)
-    }
+    @StateObject private var controller = ThemeController()
 
     var body: some Scene {
+        MenuBarExtra {
+            MenuBarView(
+                controller: controller,
+                openSettingsWindow: {
+                    SettingsWindowManager.shared.show(controller: controller)
+                }
+            )
+        } label: {
+            MenuBarStatusLabel(controller: controller)
+        }
+        .menuBarExtraStyle(.window)
+
         Settings {
             SettingsView(controller: controller)
+        }
+        .commands {
+            CommandGroup(replacing: .appSettings) {
+                Button("Settings…") {
+                    SettingsWindowManager.shared.show(controller: controller)
+                }
+                .keyboardShortcut(",", modifiers: [.command])
+            }
+
+            CommandGroup(after: .appSettings) {
+                Button("Refresh Now") {
+                    controller.refreshNow(forceLocation: true)
+                }
+                .keyboardShortcut("r", modifiers: [.command, .shift])
+            }
         }
     }
 }
 
 @MainActor
-final class StatusBarController: NSObject {
-    private let themeController: ThemeController
-    private let statusItem: NSStatusItem
-    private let popover: NSPopover
+private final class SettingsWindowManager {
+    static let shared = SettingsWindowManager()
     private var settingsWindow: NSWindow?
-    private var cancellables = Set<AnyCancellable>()
 
-    init(themeController: ThemeController) {
-        self.themeController = themeController
-        self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        self.popover = NSPopover()
-        super.init()
+    private init() {}
 
-        configurePopover()
-        configureStatusItemButton()
-        bindController()
-        observeSettingsRequests()
-        updateStatusItemAppearance()
-    }
-
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-
-    private func configurePopover() {
-        popover.behavior = .transient
-        popover.contentSize = NSSize(width: 320, height: 320)
-        popover.contentViewController = NSHostingController(rootView: MenuBarView(controller: themeController))
-    }
-
-    private func configureStatusItemButton() {
-        guard let button = statusItem.button else {
-            return
-        }
-
-        button.target = self
-        button.action = #selector(handleStatusItemClick(_:))
-        button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-        button.imagePosition = .imageLeading
-    }
-
-    private func bindController() {
-        themeController.$menuBarStatusText
-            .combineLatest(themeController.$targetIsDarkMode)
-            .sink { [weak self] _, _ in
-                self?.updateStatusItemAppearance()
-            }
-            .store(in: &cancellables)
-    }
-
-    private func observeSettingsRequests() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleOpenSettingsRequest),
-            name: Notification.Name("happymodeOpenSettingsRequested"),
-            object: nil
-        )
-    }
-
-    private func updateStatusItemAppearance() {
-        guard let button = statusItem.button else {
-            return
-        }
-
-        button.title = themeController.menuBarStatusText
-        button.image = NSImage(
-            systemSymbolName: themeController.targetIsDarkMode ? "moon.fill" : "sun.max.fill",
-            accessibilityDescription: nil
-        )
-        button.image?.isTemplate = true
-    }
-
-    @objc private func handleStatusItemClick(_ sender: NSStatusBarButton) {
-        guard let event = NSApp.currentEvent else {
-            togglePopover(relativeTo: sender)
-            return
-        }
-
-        if event.type == .rightMouseUp {
-            popover.performClose(nil)
-            showContextMenu()
-        } else {
-            togglePopover(relativeTo: sender)
-        }
-    }
-
-    private func togglePopover(relativeTo button: NSStatusBarButton) {
-        if popover.isShown {
-            popover.performClose(nil)
-        } else {
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-            popover.contentViewController?.view.window?.makeKey()
-        }
-    }
-
-    private func showContextMenu() {
-        let menu = NSMenu()
-        menu.addItem(withTitle: "Refresh Now", action: #selector(refreshNow), keyEquivalent: "")
-        menu.addItem(.separator())
-        menu.addItem(withTitle: "Options...", action: #selector(openSettings), keyEquivalent: ",")
-        menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit", action: #selector(quitApp), keyEquivalent: "q")
-        menu.items.forEach { $0.target = self }
-
-        statusItem.menu = menu
-        statusItem.button?.performClick(nil)
-        statusItem.menu = nil
-    }
-
-    @objc private func refreshNow() {
-        themeController.refreshNow(forceLocation: true)
-    }
-
-    @objc private func openSettings() {
-        showSettingsWindow()
-    }
-
-    @objc private func quitApp() {
-        NSApplication.shared.terminate(nil)
-    }
-
-    @objc private func handleOpenSettingsRequest() {
-        showSettingsWindow()
-    }
-
-    private func showSettingsWindow() {
+    func show(controller: ThemeController) {
         if settingsWindow == nil {
-            let hostingController = NSHostingController(rootView: SettingsView(controller: themeController))
+            let hostingController = NSHostingController(rootView: SettingsView(controller: controller))
+            hostingController.view.wantsLayer = true
+            hostingController.view.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
             let window = NSWindow(contentViewController: hostingController)
-            window.title = "happymode Options"
-            window.setContentSize(NSSize(width: 680, height: 620))
+            window.title = "happymode Settings"
+            window.setContentSize(NSSize(width: 860, height: 640))
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+            window.titlebarAppearsTransparent = false
+            window.titleVisibility = .visible
+            window.isOpaque = true
+            window.backgroundColor = .windowBackgroundColor
+            window.isMovableByWindowBackground = false
             window.isReleasedWhenClosed = false
             window.center()
             settingsWindow = window
@@ -160,5 +67,46 @@ final class StatusBarController: NSObject {
 
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow?.makeKeyAndOrderFront(nil)
+    }
+}
+
+private struct MenuBarStatusLabel: View {
+    @ObservedObject var controller: ThemeController
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: iconName)
+                .symbolRenderingMode(.hierarchical)
+
+            if !controller.menuBarStatusText.isEmpty {
+                Text(controller.menuBarStatusText)
+                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                    .monospacedDigit()
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("happymode")
+        .accessibilityValue(accessibilityValue)
+    }
+
+    private var iconName: String {
+        if controller.setupNeeded {
+            return "exclamationmark.triangle.fill"
+        }
+
+        return controller.targetIsDarkMode ? "moon.fill" : "sun.max.fill"
+    }
+
+    private var accessibilityValue: String {
+        if controller.setupNeeded {
+            return "Setup needed"
+        }
+
+        let mode = controller.targetIsDarkMode ? "Dark mode" : "Light mode"
+        if controller.menuBarStatusText.isEmpty {
+            return mode
+        }
+
+        return "\(mode), \(controller.menuBarStatusText) remaining"
     }
 }

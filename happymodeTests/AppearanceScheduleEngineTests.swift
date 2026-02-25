@@ -386,6 +386,61 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         }
     }
 
+    func testMenuBarStatusHidesCountdownTextWhenDisabled() {
+        let now = Date(timeIntervalSince1970: 1_000)
+        let nextTransition = Date(timeIntervalSince1970: 4_600)
+
+        let text = MenuBarStatusFormatter.statusText(
+            appearancePreference: .automatic,
+            nextTransitionDate: nextTransition,
+            now: now,
+            showRemainingTimeInMenuBar: false
+        )
+
+        XCTAssertEqual(text, "")
+    }
+
+    func testMenuBarStatusShowsCountdownWhenEnabledInAutomaticMode() {
+        let now = Date(timeIntervalSince1970: 1_000)
+        let nextTransition = Date(timeIntervalSince1970: 4_600) // 60m exactly
+
+        let text = MenuBarStatusFormatter.statusText(
+            appearancePreference: .automatic,
+            nextTransitionDate: nextTransition,
+            now: now,
+            showRemainingTimeInMenuBar: true
+        )
+
+        XCTAssertEqual(text, "1h 0m")
+    }
+
+    func testMenuBarStatusShowsAppNameOutsideAutomaticMode() {
+        let now = Date(timeIntervalSince1970: 1_000)
+
+        let text = MenuBarStatusFormatter.statusText(
+            appearancePreference: .forceDark,
+            nextTransitionDate: Date(timeIntervalSince1970: 4_600),
+            now: now,
+            showRemainingTimeInMenuBar: true
+        )
+
+        XCTAssertEqual(text, "happymode")
+    }
+
+    func testMenuBarStatusRoundsRemainingMinutesUp() {
+        let now = Date(timeIntervalSince1970: 1_000)
+        let nextTransition = Date(timeIntervalSince1970: 1_031) // 31s => 1m
+
+        let text = MenuBarStatusFormatter.statusText(
+            appearancePreference: .automatic,
+            nextTransitionDate: nextTransition,
+            now: now,
+            showRemainingTimeInMenuBar: true
+        )
+
+        XCTAssertEqual(text, "1m")
+    }
+
     private var utcCalendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .current

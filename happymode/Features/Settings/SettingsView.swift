@@ -1,235 +1,398 @@
+import AppKit
 import SwiftUI
+
+private enum SettingsTab: String, CaseIterable, Identifiable {
+    case general
+    case schedule
+    case location
+    case permissions
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .general:
+            return "General"
+        case .schedule:
+            return "Schedule"
+        case .location:
+            return "Location"
+        case .permissions:
+            return "Permissions"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .general:
+            return "gearshape"
+        case .schedule:
+            return "clock"
+        case .location:
+            return "location"
+        case .permissions:
+            return "checkmark.shield"
+        }
+    }
+}
 
 struct SettingsView: View {
     @ObservedObject var controller: ThemeController
+    @State private var selectedTab: SettingsTab = .general
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                titleBlock
-                dashboardCard
-                permissionsCard
-                locationCard
+        ZStack {
+            Color(nsColor: .windowBackgroundColor)
+                .ignoresSafeArea()
 
-                if let errorText = controller.errorText {
-                    Text(errorText)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                }
-            }
-            .padding(18)
-        }
-        .frame(minWidth: 620, minHeight: 560)
-    }
-
-    private var titleBlock: some View {
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("happymode Options")
-                    .font(.title3.weight(.semibold))
-                Text("Set mode, permissions, and location source.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            Text(controller.setupStatusText)
-                .font(.caption.weight(.medium))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(controller.setupNeeded ? Color.orange.opacity(0.15) : Color.green.opacity(0.15))
-                )
-                .foregroundStyle(controller.setupNeeded ? .orange : .green)
-        }
-    }
-
-    private var dashboardCard: some View {
-        card(title: "Dashboard") {
-            VStack(alignment: .leading, spacing: 10) {
-                infoRow(label: "Active coordinates", value: controller.activeCoordinateText ?? "Unavailable")
-                infoRow(label: "Next switch", value: controller.nextTransitionText)
-
-                VStack(alignment: .leading, spacing: 5) {
-                    Text("Mode")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    Picker("Mode", selection: $controller.appearancePreference) {
-                        ForEach(AppearancePreference.menuOrder) { preference in
-                            Text(preference.title).tag(preference)
+            VStack(spacing: 0) {
+                HStack(spacing: 10) {
+                    Picker("Section", selection: $selectedTab) {
+                        ForEach(SettingsTab.allCases) { tab in
+                            Label(tab.title, systemImage: tab.systemImage)
+                                .labelStyle(.titleAndIcon)
+                                .tag(tab)
                         }
                     }
                     .pickerStyle(.segmented)
+
+                    Button {
+                        controller.refreshNow(forceLocation: true)
+                    } label: {
+                        Label("Refresh", systemImage: "arrow.clockwise")
+                    }
+                    .buttonStyle(.bordered)
+                }
+                .padding(.horizontal, 18)
+                .padding(.top, 8)
+                .padding(.bottom, 6)
+
+                Group {
+                    switch selectedTab {
+                    case .general:
+                        GeneralSettingsPane(controller: controller)
+                    case .schedule:
+                        ScheduleSettingsPane(controller: controller)
+                    case .location:
+                        LocationSettingsPane(controller: controller)
+                    case .permissions:
+                        PermissionsSettingsPane(controller: controller)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .frame(minWidth: 760, minHeight: 600)
+    }
+}
+
+private struct GeneralSettingsPane: View {
+    @ObservedObject var controller: ThemeController
+
+    var body: some View {
+        Form {
+            Section {
+                Picker("Appearance", selection: $controller.appearancePreference) {
+                    ForEach(AppearancePreference.menuOrder) { preference in
+                        Label(preference.title, systemImage: preference.systemImage)
+                            .tag(preference)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                Toggle("Show remaining time in menu bar", isOn: $controller.showRemainingTimeInMenuBar)
+
+                LabeledContent {
+                    Text(controller.targetIsDarkMode ? "Dark" : "Light")
+                } label: {
+                    Label("Current mode", systemImage: "circle.lefthalf.filled")
                 }
 
-                if controller.appearancePreference == .automatic {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Automatic Schedule")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                LabeledContent {
+                    Text(controller.appearanceDescriptionText)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.trailing)
+                } label: {
+                    Label("Description", systemImage: "text.alignleft")
+                }
+            } header: {
+                Label("Appearance", systemImage: "sun.max")
+            }
 
-                        Picker("Automatic Schedule", selection: $controller.automaticScheduleMode) {
-                            ForEach(AutomaticScheduleMode.menuOrder) { mode in
-                                Text(mode.title).tag(mode)
-                            }
-                        }
-                        .pickerStyle(.segmented)
+            Section {
+                LabeledContent {
+                    Text(controller.nextTransitionText)
+                        .multilineTextAlignment(.trailing)
+                } label: {
+                    Label("Next switch", systemImage: "timer")
+                }
+
+                statusRow(
+                    title: controller.transitionStartTitle,
+                    value: controller.currentSunriseText,
+                    systemImage: controller.transitionStartSymbol
+                )
+                statusRow(
+                    title: controller.transitionEndTitle,
+                    value: controller.currentSunsetText,
+                    systemImage: controller.transitionEndSymbol
+                )
+
+                LabeledContent {
+                    Text(controller.locationStatusText)
+                } label: {
+                    Label("Location status", systemImage: "location.circle")
+                }
+
+                if let activeCoordinate = controller.activeCoordinateText {
+                    LabeledContent {
+                        Text(activeCoordinate)
+                    } label: {
+                        Label("Active coordinates", systemImage: "map")
                     }
+                }
+            } header: {
+                Label("Status", systemImage: "waveform.path.ecg")
+            }
 
-                    if controller.automaticScheduleMode == .customTimes {
-                        HStack(spacing: 12) {
-                            DatePicker("Light at",
-                                       selection: $controller.customLightTime,
-                                       displayedComponents: .hourAndMinute)
-
-                            DatePicker("Dark at",
-                                       selection: $controller.customDarkTime,
-                                       displayedComponents: .hourAndMinute)
-                        }
-                        .datePickerStyle(.field)
-
-                        Text("Custom times run daily in your current macOS time zone.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+            if let errorText = controller.errorText {
+                Section {
+                    Text(errorText)
+                        .foregroundStyle(.red)
+                } header: {
+                    Label("Error", systemImage: "exclamationmark.triangle")
                 }
             }
         }
+        .formStyle(.grouped)
+        .padding(.top, -6)
     }
 
-    private var permissionsCard: some View {
-        card(title: "Permissions") {
-            VStack(alignment: .leading, spacing: 12) {
-                permissionRow(
-                    title: "Location",
-                    status: controller.locationPermissionText,
-                    complete: controller.locationSetupComplete,
-                    grantAction: { controller.requestLocationPermission() },
-                    openAction: { controller.openLocationPrivacySettings() }
-                )
-
-                permissionRow(
-                    title: "Automation",
-                    status: controller.automationPermissionText,
-                    complete: controller.automationSetupComplete,
-                    grantAction: { controller.requestAutomationPermission() },
-                    openAction: { controller.openAutomationPrivacySettings() }
-                )
-            }
+    private func statusRow(title: String, value: String, systemImage: String) -> some View {
+        HStack {
+            Label(title, systemImage: systemImage)
+            Spacer()
+            Text(value)
+                .foregroundStyle(.secondary)
         }
     }
+}
 
-    private var locationCard: some View {
-        card(title: "Current Location") {
-            VStack(alignment: .leading, spacing: 10) {
+private struct ScheduleSettingsPane: View {
+    @ObservedObject var controller: ThemeController
+
+    var body: some View {
+        Form {
+            Section {
+                Picker("Automatic schedule", selection: $controller.automaticScheduleMode) {
+                    ForEach(AutomaticScheduleMode.menuOrder) { mode in
+                        Label(mode.title, systemImage: mode.systemImage)
+                            .tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                if controller.automaticScheduleMode == .customTimes {
+                    DatePicker("Light at",
+                               selection: $controller.customLightTime,
+                               displayedComponents: .hourAndMinute)
+                    DatePicker("Dark at",
+                               selection: $controller.customDarkTime,
+                               displayedComponents: .hourAndMinute)
+
+                    Text("Custom times run daily in your current macOS time zone.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Label("Schedule Source", systemImage: "calendar.badge.clock")
+            }
+
+            Section {
+                ForEach(controller.weeklySolarDays) { day in
+                    LabeledContent(dayLabel(for: day.date)) {
+                        Text(valueText(for: day.kind))
+                            .multilineTextAlignment(.trailing)
+                    }
+                }
+
+                if controller.automaticScheduleMode == .customTimes {
+                    Text("Weekly solar preview is hidden when using custom times.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                } else if controller.weeklySolarDays.isEmpty {
+                    Text("Solar preview becomes available after location is resolved.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Label("Weekly Preview", systemImage: "calendar")
+            }
+        }
+        .formStyle(.grouped)
+        .padding(.top, -6)
+    }
+
+    private func dayLabel(for date: Date) -> String {
+        date.formatted(.dateTime.weekday(.abbreviated).month().day())
+    }
+
+    private func valueText(for kind: WeeklySolarKind) -> String {
+        switch kind {
+        case .normal(let sunrise, let sunset):
+            let sunriseText = sunrise.formatted(date: .omitted, time: .shortened)
+            let sunsetText = sunset.formatted(date: .omitted, time: .shortened)
+            return "\(sunriseText) - \(sunsetText)"
+        case .alwaysDark:
+            return "Polar night"
+        case .alwaysLight:
+            return "Midnight sun"
+        }
+    }
+}
+
+private struct LocationSettingsPane: View {
+    @ObservedObject var controller: ThemeController
+
+    var body: some View {
+        Form {
+            Section {
                 Toggle("Use current location", isOn: $controller.useAutomaticLocation)
 
                 if let detected = controller.detectedCoordinateText {
-                    infoRow(label: "Detected coordinates", value: detected)
+                    LabeledContent("Detected", value: detected)
                 }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 10) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Latitude")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            TextField("25.000000", text: $controller.manualLatitudeText)
-                                .textFieldStyle(.roundedBorder)
-                        }
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Longitude")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            TextField("80.000000", text: $controller.manualLongitudeText)
-                                .textFieldStyle(.roundedBorder)
-                        }
-                    }
-
-                    HStack(spacing: 8) {
-                        Button("Use detected") {
-                            controller.fillManualCoordinatesFromDetected()
-                        }
-                        .disabled(!controller.hasDetectedCoordinate)
-
-                        Button("Refresh current location") {
-                            controller.refreshNow(forceLocation: true)
-                        }
-                        .disabled(!controller.useAutomaticLocation)
-                    }
+                HStack(spacing: 12) {
+                    TextField("Latitude", text: $controller.manualLatitudeText)
+                    TextField("Longitude", text: $controller.manualLongitudeText)
                 }
 
                 if (!controller.manualLatitudeText.isEmpty || !controller.manualLongitudeText.isEmpty) && !controller.manualCoordinatesAreValid {
                     Text("Coordinates must be valid: latitude -90...90 and longitude -180...180.")
-                        .font(.caption)
                         .foregroundStyle(.red)
                 }
 
-                Text("Use detected copies your latest detected coordinates into the manual fields.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    Button("Use detected") {
+                        controller.fillManualCoordinatesFromDetected()
+                    }
+                    .disabled(!controller.hasDetectedCoordinate)
+
+                    Button("Refresh current location") {
+                        controller.refreshNow(forceLocation: true)
+                    }
+                    .disabled(!controller.useAutomaticLocation)
+                }
+            } header: {
+                Label("Coordinates", systemImage: "location")
+            }
+
+            Section {
+                LabeledContent {
+                    Text(controller.locationStatusText)
+                } label: {
+                    Label("Resolved source", systemImage: "scope")
+                }
+
+                LabeledContent {
+                    Text(controller.locationPermissionText)
+                } label: {
+                    Label("Permission", systemImage: "lock.shield")
+                }
+
+                Button("Open Location Privacy") {
+                    controller.openLocationPrivacySettings()
+                }
+            } header: {
+                Label("Location Status", systemImage: "location.circle")
             }
         }
+        .formStyle(.grouped)
+        .padding(.top, -6)
     }
+}
 
-    private func card<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.headline)
+private struct PermissionsSettingsPane: View {
+    @ObservedObject var controller: ThemeController
 
-            content()
+    var body: some View {
+        Form {
+            Section {
+                PermissionStatusRow(
+                    title: "Location",
+                    status: controller.locationPermissionText,
+                    isComplete: controller.locationSetupComplete,
+                    primaryActionLabel: "Grant Access",
+                    primaryAction: { controller.requestLocationPermission() },
+                    secondaryActionLabel: "Open Privacy",
+                    secondaryAction: { controller.openLocationPrivacySettings() }
+                )
+
+                PermissionStatusRow(
+                    title: "Automation",
+                    status: controller.automationPermissionText,
+                    isComplete: controller.automationSetupComplete,
+                    primaryActionLabel: "Grant Access",
+                    primaryAction: { controller.requestAutomationPermission() },
+                    secondaryActionLabel: "Open Privacy",
+                    secondaryAction: { controller.openAutomationPrivacySettings() }
+                )
+            } header: {
+                Label("Required Access", systemImage: "checkmark.shield")
+            }
+
+            Section {
+                Label(controller.setupStatusText,
+                      systemImage: controller.setupNeeded ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                    .foregroundStyle(controller.setupNeeded ? .orange : .green)
+
+                Text(controller.setupGuidanceText)
+                    .foregroundStyle(.secondary)
+            } header: {
+                Label("Setup Status", systemImage: "info.circle")
+            }
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.secondary.opacity(0.08))
-        )
+        .formStyle(.grouped)
+        .padding(.top, -6)
     }
+}
 
-    private func infoRow(label: String, value: String) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .frame(width: 130, alignment: .leading)
+private struct PermissionStatusRow: View {
+    let title: String
+    let status: String
+    let isComplete: Bool
+    let primaryActionLabel: String
+    let primaryAction: () -> Void
+    let secondaryActionLabel: String
+    let secondaryAction: () -> Void
 
-            Text(value)
-                .font(.callout)
-        }
-    }
-
-    private func permissionRow(title: String,
-                               status: String,
-                               complete: Bool,
-                               grantAction: @escaping () -> Void,
-                               openAction: @escaping () -> Void) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: complete ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                .foregroundStyle(complete ? .green : .orange)
-                .padding(.top, 1)
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: isComplete ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                .foregroundStyle(isComplete ? .green : .orange)
+                .padding(.top, 2)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.headline)
                 Text(status)
-                    .font(.caption)
+                    .font(.callout)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Spacer()
 
             HStack(spacing: 8) {
-                Button("Grant", action: grantAction)
+                Button(primaryActionLabel, action: primaryAction)
                     .buttonStyle(.borderedProminent)
 
-                Button("Open Privacy", action: openAction)
+                Button(secondaryActionLabel, action: secondaryAction)
                     .buttonStyle(.bordered)
             }
+            .controlSize(.small)
         }
+        .padding(.vertical, 2)
     }
 }

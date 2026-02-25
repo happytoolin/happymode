@@ -8,7 +8,7 @@ enum AppearancePreference: String, CaseIterable, Identifiable {
     case forceLight
     case forceDark
 
-    static let menuOrder: [AppearancePreference] = [.automatic, .forceLight, .forceDark]
+    static let menuOrder: [AppearancePreference] = [.forceDark, .automatic, .forceLight]
 
     var id: String { rawValue }
 
@@ -20,6 +20,17 @@ enum AppearancePreference: String, CaseIterable, Identifiable {
             return "Light"
         case .forceDark:
             return "Dark"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .automatic:
+            return "circle.lefthalf.filled"
+        case .forceLight:
+            return "sun.max.fill"
+        case .forceDark:
+            return "moon.fill"
         }
     }
 
@@ -49,6 +60,15 @@ enum AutomaticScheduleMode: String, CaseIterable, Identifiable {
             return "Sunrise/Sunset"
         case .customTimes:
             return "Custom Times"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .sunriseSunset:
+            return "sun.horizon"
+        case .customTimes:
+            return "clock.badge"
         }
     }
 }
@@ -197,6 +217,37 @@ enum AppearanceScheduleEngine {
     }
 }
 
+enum MenuBarStatusFormatter {
+    static func statusText(appearancePreference: AppearancePreference,
+                           nextTransitionDate: Date?,
+                           now: Date,
+                           showRemainingTimeInMenuBar: Bool) -> String {
+        guard showRemainingTimeInMenuBar else {
+            return ""
+        }
+
+        guard appearancePreference == .automatic,
+              let nextTransitionDate else {
+            return "happymode"
+        }
+
+        return remainingTime(until: nextTransitionDate, now: now)
+    }
+
+    static func remainingTime(until date: Date, now: Date) -> String {
+        let seconds = max(0, Int(date.timeIntervalSince(now)))
+        let totalMinutes = (seconds + 59) / 60
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        }
+
+        return "\(minutes)m"
+    }
+}
+
 enum WeeklySolarKind {
     case normal(sunrise: Date, sunset: Date)
     case alwaysDark
@@ -247,6 +298,13 @@ final class ThemeController: NSObject, ObservableObject {
         didSet {
             defaults.set(Self.minutesSinceMidnight(for: customDarkTime), forKey: Self.customDarkMinutesKey)
             refreshNow(forceLocation: false)
+        }
+    }
+
+    @Published var showRemainingTimeInMenuBar: Bool {
+        didSet {
+            defaults.set(showRemainingTimeInMenuBar, forKey: Self.showRemainingTimeInMenuBarKey)
+            updateMenuBarStatus(now: Date())
         }
     }
 
@@ -319,6 +377,15 @@ final class ThemeController: NSObject, ObservableObject {
         case .forceDark:
             return "Forced Dark mode ignores sunrise/sunset until switched back to Auto."
         }
+    }
+
+    var nextTransitionRemainingText: String {
+        guard appearancePreference == .automatic,
+              let nextTransitionDate else {
+            return nextTransitionText
+        }
+
+        return MenuBarStatusFormatter.remainingTime(until: nextTransitionDate, now: Date())
     }
 
     var isLocationAuthorized: Bool {
@@ -418,6 +485,7 @@ final class ThemeController: NSObject, ObservableObject {
     private static let manualLongitudeKey = "manualLongitude"
     private static let customLightMinutesKey = "customLightMinutes"
     private static let customDarkMinutesKey = "customDarkMinutes"
+    private static let showRemainingTimeInMenuBarKey = "showRemainingTimeInMenuBar"
 
     private static let defaultCustomLightMinutes = 7 * 60
     private static let defaultCustomDarkMinutes = 19 * 60
@@ -472,12 +540,14 @@ final class ThemeController: NSObject, ObservableObject {
         let storedLongitude = defaults.string(forKey: Self.manualLongitudeKey) ?? ""
         let storedLightMinutes = defaults.object(forKey: Self.customLightMinutesKey) as? Int ?? Self.defaultCustomLightMinutes
         let storedDarkMinutes = defaults.object(forKey: Self.customDarkMinutesKey) as? Int ?? Self.defaultCustomDarkMinutes
+        let storedShowRemainingTime = defaults.object(forKey: Self.showRemainingTimeInMenuBarKey) as? Bool ?? true
 
         self.useAutomaticLocation = storedAutomatic
         self.appearancePreference = storedPreference
         self.automaticScheduleMode = storedScheduleMode
         self.customLightTime = Self.dateFromMinutesSinceMidnight(storedLightMinutes)
         self.customDarkTime = Self.dateFromMinutesSinceMidnight(storedDarkMinutes)
+        self.showRemainingTimeInMenuBar = storedShowRemainingTime
         self.manualLatitudeText = storedLatitude
         self.manualLongitudeText = storedLongitude
         self.targetIsDarkMode = Self.systemIsCurrentlyDarkMode()
@@ -554,10 +624,6 @@ final class ThemeController: NSObject, ObservableObject {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation") {
             NSWorkspace.shared.open(url)
         }
-    }
-
-    func openAppSettings() {
-        NotificationCenter.default.post(name: Notification.Name("happymodeOpenSettingsRequested"), object: nil)
     }
 
     func fillManualCoordinatesFromDetected() {
@@ -761,25 +827,16 @@ final class ThemeController: NSObject, ObservableObject {
     }
 
     private func updateMenuBarStatus(now: Date) {
-        guard appearancePreference == .automatic, let nextTransitionDate else {
-            menuBarStatusText = "happymode"
-            return
-        }
-
-        menuBarStatusText = formatRemainingTime(until: nextTransitionDate, now: now)
+        menuBarStatusText = MenuBarStatusFormatter.statusText(
+            appearancePreference: appearancePreference,
+            nextTransitionDate: nextTransitionDate,
+            now: now,
+            showRemainingTimeInMenuBar: showRemainingTimeInMenuBar
+        )
     }
 
     private func formatRemainingTime(until date: Date, now: Date) -> String {
-        let seconds = max(0, Int(date.timeIntervalSince(now)))
-        let totalMinutes = (seconds + 59) / 60
-        let hours = totalMinutes / 60
-        let minutes = totalMinutes % 60
-
-        if hours > 0 {
-            return "\(hours)h \(minutes)m"
-        }
-
-        return "\(minutes)m"
+        MenuBarStatusFormatter.remainingTime(until: date, now: now)
     }
 
     private func applyAppearanceIfNeeded(darkMode: Bool) {
