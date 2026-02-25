@@ -35,7 +35,7 @@ struct GeneralSettingsPane: View {
     @ObservedObject var controller: ThemeController
 
     private var appVersion: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.4"
     }
 
     var body: some View {
@@ -287,11 +287,11 @@ struct AboutSettingsPane: View {
     }
 
     private var appVersion: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.4"
     }
 
     private var appBuild: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "4"
     }
 
     var body: some View {

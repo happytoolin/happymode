@@ -3,7 +3,7 @@ set -euo pipefail
 
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
   echo "Usage: $0 <version> <sha256> [repo]" >&2
-  echo "Example: $0 1.0.0 deadbeef... happytoolin/happymode" >&2
+  echo "Example: $0 0.0.4 deadbeef... happytoolin/happymode" >&2
   exit 1
 fi
 
