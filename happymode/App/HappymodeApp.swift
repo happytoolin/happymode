@@ -10,7 +10,7 @@ struct HappymodeApp: App {
             MenuBarView(
                 controller: controller,
                 openSettingsWindow: {
-                    SettingsWindowManager.shared.show(controller: controller)
+                    openSettings(controller: controller)
                 }
             )
         } label: {
@@ -24,7 +24,7 @@ struct HappymodeApp: App {
         .commands {
             CommandGroup(replacing: .appSettings) {
                 Button("Settings…") {
-                    SettingsWindowManager.shared.show(controller: controller)
+                    openSettings(controller: controller)
                 }
                 .keyboardShortcut(",", modifiers: [.command])
             }
@@ -36,6 +36,13 @@ struct HappymodeApp: App {
                 .keyboardShortcut("r", modifiers: [.command, .shift])
             }
         }
+    }
+
+    @MainActor
+    private func openSettings(controller: ThemeController) {
+        // `showSettingsWindow:` can fail when triggered from a menu bar popup.
+        // Always route through our managed window for consistent behavior.
+        SettingsWindowManager.shared.show(controller: controller)
     }
 }
 

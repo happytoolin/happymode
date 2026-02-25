@@ -1,85 +1,37 @@
-import AppKit
 import SwiftUI
-
-private enum SettingsTab: String, CaseIterable, Identifiable {
-    case general
-    case schedule
-    case location
-    case permissions
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .general:
-            return "General"
-        case .schedule:
-            return "Schedule"
-        case .location:
-            return "Location"
-        case .permissions:
-            return "Permissions"
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .general:
-            return "gearshape"
-        case .schedule:
-            return "clock"
-        case .location:
-            return "location"
-        case .permissions:
-            return "checkmark.shield"
-        }
-    }
-}
 
 struct SettingsView: View {
     @ObservedObject var controller: ThemeController
-    @State private var selectedTab: SettingsTab = .general
 
     var body: some View {
-        ZStack {
-            Color(nsColor: .windowBackgroundColor)
-                .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                HStack(spacing: 10) {
-                    Picker("Section", selection: $selectedTab) {
-                        ForEach(SettingsTab.allCases) { tab in
-                            Label(tab.title, systemImage: tab.systemImage)
-                                .labelStyle(.titleAndIcon)
-                                .tag(tab)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-
-                    Button {
-                        controller.refreshNow(forceLocation: true)
-                    } label: {
-                        Label("Refresh", systemImage: "arrow.clockwise")
-                    }
-                    .buttonStyle(.bordered)
+        TabView {
+            GeneralSettingsPane(controller: controller)
+                .tabItem {
+                    Label("General", systemImage: "gearshape")
                 }
-                .padding(.horizontal, 18)
-                .padding(.top, 8)
-                .padding(.bottom, 6)
 
-                Group {
-                    switch selectedTab {
-                    case .general:
-                        GeneralSettingsPane(controller: controller)
-                    case .schedule:
-                        ScheduleSettingsPane(controller: controller)
-                    case .location:
-                        LocationSettingsPane(controller: controller)
-                    case .permissions:
-                        PermissionsSettingsPane(controller: controller)
-                    }
+            ScheduleSettingsPane(controller: controller)
+                .tabItem {
+                    Label("Schedule", systemImage: "clock")
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            LocationSettingsPane(controller: controller)
+                .tabItem {
+                    Label("Location", systemImage: "location")
+                }
+
+            PermissionsSettingsPane(controller: controller)
+                .tabItem {
+                    Label("Permissions", systemImage: "checkmark.shield")
+                }
+        }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    controller.refreshNow(forceLocation: true)
+                } label: {
+                    Label("Refresh", systemImage: "arrow.clockwise")
+                }
             }
         }
         .frame(minWidth: 760, minHeight: 600)
@@ -165,7 +117,6 @@ private struct GeneralSettingsPane: View {
             }
         }
         .formStyle(.grouped)
-        .padding(.top, -6)
     }
 
     private func statusRow(title: String, value: String, systemImage: String) -> some View {
@@ -230,7 +181,6 @@ private struct ScheduleSettingsPane: View {
             }
         }
         .formStyle(.grouped)
-        .padding(.top, -6)
     }
 
     private func dayLabel(for date: Date) -> String {
@@ -309,7 +259,6 @@ private struct LocationSettingsPane: View {
             }
         }
         .formStyle(.grouped)
-        .padding(.top, -6)
     }
 }
 
@@ -354,7 +303,6 @@ private struct PermissionsSettingsPane: View {
             }
         }
         .formStyle(.grouped)
-        .padding(.top, -6)
     }
 }
 
