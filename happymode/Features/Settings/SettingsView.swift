@@ -1,122 +1,140 @@
 import AppKit
 import SwiftUI
 
-struct SettingsView: View {
-    @ObservedObject var controller: ThemeController
-    @ObservedObject var updateController: AppUpdateController
+// MARK: - Shared helpers
 
+private let paneWidth: CGFloat = 380
+
+private struct SectionHeader: View {
+    let title: String
     var body: some View {
-        TabView {
-            Tab("General", systemImage: "gearshape") {
-                GeneralSettingsPane(controller: controller)
-            }
-
-            Tab("Schedule", systemImage: "clock") {
-                ScheduleSettingsPane(controller: controller)
-            }
-
-            Tab("Location", systemImage: "location") {
-                LocationSettingsPane(controller: controller)
-            }
-
-            Tab("Permissions", systemImage: "checkmark.shield") {
-                PermissionsSettingsPane(controller: controller)
-            }
-
-            Tab("About", systemImage: "info.circle") {
-                AboutSettingsPane(updateController: updateController)
-            }
-        }
-        .frame(minWidth: 480, minHeight: 360)
+        Text(title)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .textCase(.uppercase)
+            .tracking(0.5)
     }
 }
+
+// MARK: - General
 
 struct GeneralSettingsPane: View {
     @ObservedObject var controller: ThemeController
+    @ObservedObject var launchAtLoginController: LaunchAtLoginController
 
-    private var appVersion: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.4"
-    }
+    @State private var showLaunchAtLoginErrorAlert = false
+    @State private var launchAtLoginErrorMessage = ""
 
     var body: some View {
-        Form {
-            Section {
-                HStack(spacing: 12) {
-                    Image("Logo")
-                        .resizable()
-                        .interpolation(.high)
-                        .frame(width: 48, height: 48)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 10) {
+                SectionHeader(title: "Appearance")
 
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("happymode")
-                            .font(.title3.bold())
-                        Text("Version \(appVersion)")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+                HStack {
+                    Text("Theme")
+                    Spacer()
+                    Picker("", selection: $controller.appearancePreference) {
+                        ForEach(AppearancePreference.menuOrder) { preference in
+                            Text(preference.title).tag(preference)
+                        }
                     }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .fixedSize()
                 }
-                .padding(.vertical, 4)
-            }
 
-            Section {
-                Picker("Appearance", selection: $controller.appearancePreference) {
-                    ForEach(AppearancePreference.menuOrder) { preference in
-                        Label(preference.title, systemImage: preference.systemImage)
-                            .tag(preference)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                LabeledContent {
+                HStack {
+                    Text("Current mode")
+                    Spacer()
                     Text(controller.targetIsDarkMode ? "Dark" : "Light")
-                } label: {
-                    Label("Current mode", systemImage: "circle.lefthalf.filled")
+                        .foregroundStyle(.secondary)
                 }
-            } header: {
-                Label("Appearance", systemImage: "sun.max")
             }
 
-            Section {
+            Divider()
+
+            VStack(alignment: .leading, spacing: 10) {
+                SectionHeader(title: "Menu Bar")
+
                 Toggle("Show remaining time in menu bar", isOn: $controller.showRemainingTimeInMenuBar)
 
-                LabeledContent {
+                HStack {
+                    Text("Next switch")
+                    Spacer()
                     Text(controller.nextTransitionText)
                         .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.trailing)
-                } label: {
-                    Label("Next switch", systemImage: "timer")
                 }
-            } header: {
-                Label("Menu Bar", systemImage: "menubar.rectangle")
+            }
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 10) {
+                SectionHeader(title: "Startup")
+
+                Toggle(
+                    "Start happymode at login",
+                    isOn: Binding(
+                        get: { launchAtLoginController.isEnabled },
+                        set: { newValue in
+                            do {
+                                try launchAtLoginController.setEnabled(newValue)
+                            } catch {
+                                launchAtLoginErrorMessage = error.localizedDescription
+                                showLaunchAtLoginErrorAlert = true
+                                launchAtLoginController.refresh()
+                            }
+                        }
+                    )
+                )
+
+                if let hint = launchAtLoginController.statusHintText {
+                    Text(hint)
+                        .font(.footnote)
+                        .foregroundStyle(launchAtLoginController.isAwaitingApproval ? Color.secondary : Color.orange)
+                }
             }
 
             if let errorText = controller.errorText {
-                Section {
-                    Text(errorText)
-                        .foregroundStyle(.red)
-                } header: {
-                    Label("Error", systemImage: "exclamationmark.triangle")
-                }
+                Divider()
+                Label(errorText, systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.red)
+                    .font(.callout)
             }
         }
-        .formStyle(.grouped)
+        .padding(20)
+        .frame(width: paneWidth, alignment: .leading)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .onAppear { launchAtLoginController.refresh() }
+        .alert("Unable to Update Login Item", isPresented: $showLaunchAtLoginErrorAlert) {
+            Button("OK") {}
+        } message: {
+            Text(launchAtLoginErrorMessage)
+        }
     }
 }
+
+// MARK: - Schedule
 
 struct ScheduleSettingsPane: View {
     @ObservedObject var controller: ThemeController
 
     var body: some View {
-        Form {
-            Section {
-                Picker("Automatic schedule", selection: $controller.automaticScheduleMode) {
-                    ForEach(AutomaticScheduleMode.menuOrder) { mode in
-                        Label(mode.title, systemImage: mode.systemImage)
-                            .tag(mode)
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 10) {
+                SectionHeader(title: "Schedule Source")
+
+                HStack {
+                    Text("Mode")
+                    Spacer()
+                    Picker("", selection: $controller.automaticScheduleMode) {
+                        ForEach(AutomaticScheduleMode.menuOrder) { mode in
+                            Text(mode.title).tag(mode)
+                        }
                     }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .fixedSize()
                 }
-                .pickerStyle(.segmented)
 
                 if controller.automaticScheduleMode == .customTimes {
                     DatePicker("Light at",
@@ -130,32 +148,36 @@ struct ScheduleSettingsPane: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
-            } header: {
-                Label("Schedule Source", systemImage: "calendar.badge.clock")
             }
 
-            Section {
-                ForEach(controller.weeklySolarDays) { day in
-                    LabeledContent(dayLabel(for: day.date)) {
-                        Text(valueText(for: day.kind))
-                            .multilineTextAlignment(.trailing)
-                    }
-                }
+            Divider()
+
+            VStack(alignment: .leading, spacing: 8) {
+                SectionHeader(title: "Weekly Preview")
 
                 if controller.automaticScheduleMode == .customTimes {
-                    Text("Weekly solar preview is hidden when using custom times.")
-                        .font(.footnote)
+                    Text("Hidden when using custom times.")
+                        .font(.callout)
                         .foregroundStyle(.secondary)
                 } else if controller.weeklySolarDays.isEmpty {
-                    Text("Solar preview becomes available after location is resolved.")
-                        .font(.footnote)
+                    Text("Available after location is resolved.")
+                        .font(.callout)
                         .foregroundStyle(.secondary)
+                } else {
+                    ForEach(controller.weeklySolarDays) { day in
+                        HStack {
+                            Text(dayLabel(for: day.date))
+                            Spacer()
+                            Text(valueText(for: day.kind))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
-            } header: {
-                Label("Weekly Preview", systemImage: "calendar")
             }
         }
-        .formStyle(.grouped)
+        .padding(20)
+        .frame(width: paneWidth, alignment: .leading)
+        .frame(maxHeight: .infinity, alignment: .top)
     }
 
     private func dayLabel(for date: Date) -> String {
@@ -167,7 +189,7 @@ struct ScheduleSettingsPane: View {
         case .normal(let sunrise, let sunset):
             let sunriseText = sunrise.formatted(date: .omitted, time: .shortened)
             let sunsetText = sunset.formatted(date: .omitted, time: .shortened)
-            return "\(sunriseText) - \(sunsetText)"
+            return "\(sunriseText) – \(sunsetText)"
         case .alwaysDark:
             return "Polar night"
         case .alwaysLight:
@@ -176,105 +198,122 @@ struct ScheduleSettingsPane: View {
     }
 }
 
+// MARK: - Location
+
 struct LocationSettingsPane: View {
     @ObservedObject var controller: ThemeController
 
     var body: some View {
-        Form {
-            Section {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 10) {
+                SectionHeader(title: "Automatic")
+
                 Toggle("Use current location", isOn: $controller.useAutomaticLocation)
 
                 if let detected = controller.detectedCoordinateText {
-                    LabeledContent("Detected", value: detected)
+                    HStack {
+                        Text("Detected")
+                        Spacer()
+                        Text(detected)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
-                LabeledContent {
+                HStack {
+                    Text("Source")
+                    Spacer()
                     Text(controller.locationStatusText)
                         .foregroundStyle(.secondary)
-                } label: {
-                    Text("Source")
                 }
-            } header: {
-                Label("Location", systemImage: "location")
             }
 
-            Section {
+            Divider()
+
+            VStack(alignment: .leading, spacing: 10) {
+                SectionHeader(title: "Manual Coordinates")
+
                 HStack(spacing: 12) {
                     TextField(
                         "Latitude",
                         value: $controller.manualLatitude,
                         format: .number.precision(.fractionLength(0 ... 4))
                     )
+                    .textFieldStyle(.roundedBorder)
                     TextField(
                         "Longitude",
                         value: $controller.manualLongitude,
                         format: .number.precision(.fractionLength(0 ... 4))
                     )
+                    .textFieldStyle(.roundedBorder)
                 }
 
                 if controller.hasManualCoordinateInput && !controller.manualCoordinatesAreValid {
-                    Text("Latitude must be -90...90, longitude -180...180.")
+                    Text("Latitude must be –90…90, longitude –180…180.")
                         .font(.footnote)
                         .foregroundStyle(.red)
                 }
 
-                HStack(spacing: 8) {
-                    Button("Copy from detected") {
-                        controller.fillManualCoordinatesFromDetected()
-                    }
-                    .disabled(!controller.hasDetectedCoordinate)
+                Button("Copy from detected") {
+                    controller.fillManualCoordinatesFromDetected()
                 }
-            } header: {
-                Label("Manual Coordinates", systemImage: "map")
+                .controlSize(.small)
+                .disabled(!controller.hasDetectedCoordinate)
             }
         }
-        .formStyle(.grouped)
+        .padding(20)
+        .frame(width: paneWidth, alignment: .leading)
+        .frame(maxHeight: .infinity, alignment: .top)
     }
 }
+
+// MARK: - Permissions
 
 struct PermissionsSettingsPane: View {
     @ObservedObject var controller: ThemeController
 
     var body: some View {
-        Form {
-            Section {
-                PermissionStatusRow(
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 12) {
+                SectionHeader(title: "Required Access")
+
+                PermissionRow(
                     title: "Location",
                     status: controller.locationPermissionText,
                     isComplete: controller.locationSetupComplete,
-                    primaryActionLabel: "Grant Access",
-                    primaryAction: { controller.requestLocationPermission() },
-                    secondaryActionLabel: "Open Privacy",
-                    secondaryAction: { controller.openLocationPrivacySettings() }
+                    grantAction: { controller.requestLocationPermission() },
+                    openAction: { controller.openLocationPrivacySettings() }
                 )
 
-                PermissionStatusRow(
+                PermissionRow(
                     title: "Automation",
                     status: controller.automationPermissionText,
                     isComplete: controller.automationSetupComplete,
-                    primaryActionLabel: "Grant Access",
-                    primaryAction: { controller.requestAutomationPermission() },
-                    secondaryActionLabel: "Open Privacy",
-                    secondaryAction: { controller.openAutomationPrivacySettings() }
+                    grantAction: { controller.requestAutomationPermission() },
+                    openAction: { controller.openAutomationPrivacySettings() }
                 )
-            } header: {
-                Label("Required Access", systemImage: "checkmark.shield")
             }
 
-            Section {
+            Divider()
+
+            VStack(alignment: .leading, spacing: 8) {
+                SectionHeader(title: "Status")
+
                 Label(controller.setupStatusText,
                       systemImage: controller.setupNeeded ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
                     .foregroundStyle(controller.setupNeeded ? .orange : .green)
 
                 Text(controller.setupGuidanceText)
+                    .font(.callout)
                     .foregroundStyle(.secondary)
-            } header: {
-                Label("Setup Status", systemImage: "info.circle")
             }
         }
-        .formStyle(.grouped)
+        .padding(20)
+        .frame(width: paneWidth, alignment: .leading)
+        .frame(maxHeight: .infinity, alignment: .top)
     }
 }
+
+// MARK: - About
 
 struct AboutSettingsPane: View {
     @ObservedObject var updateController: AppUpdateController
@@ -295,100 +334,84 @@ struct AboutSettingsPane: View {
     }
 
     var body: some View {
-        Form {
-            Section {
-                HStack(spacing: 12) {
-                    Image("Logo")
-                        .resizable()
-                        .interpolation(.high)
-                        .frame(width: 48, height: 48)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        VStack(spacing: 14) {
+            Spacer().frame(height: 4)
 
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(appName)
-                            .font(.title3.bold())
-                        Text("Version \(appVersion) (\(appBuild))")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(.vertical, 4)
+            Image("Logo")
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 64, height: 64)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+            VStack(spacing: 3) {
+                Text(appName)
+                    .font(.title3.bold())
+                Text("Version \(appVersion) (\(appBuild))")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
             }
 
-            Section {
-                LabeledContent("GitHub") {
-                    Link("github.com/happytoolin/happymode", destination: githubURL)
-                }
+            HStack(spacing: 12) {
+                Link("GitHub", destination: githubURL)
+                Text("·").foregroundStyle(.quaternary)
+                Link("Website", destination: websiteURL)
+            }
+            .font(.callout)
 
-                LabeledContent("Website") {
-                    Link("happytoolin.com", destination: websiteURL)
+            Divider()
+                .padding(.horizontal, 40)
+
+            HStack(spacing: 8) {
+                Button(updateController.isChecking ? "Checking…" : "Check for Updates…") {
+                    updateController.checkForUpdates(userInitiated: true)
                 }
-            } header: {
-                Label("Links", systemImage: "link")
+                .controlSize(.regular)
+                .disabled(updateController.isChecking)
+
+                if updateController.isChecking {
+                    ProgressView()
+                        .controlSize(.small)
+                }
             }
 
-            Section {
-                HStack(spacing: 10) {
-                    Button(updateController.isChecking ? "Checking..." : "Check for Updates...") {
-                        updateController.checkForUpdates(userInitiated: true)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(updateController.isChecking)
-
-                    if updateController.isChecking {
-                        ProgressView()
-                            .controlSize(.small)
-                    }
-
-                    Button("Open Native About Panel") {
-                        NSApp.orderFrontStandardAboutPanel(options: [:])
-                        NSApp.activate(ignoringOtherApps: true)
-                    }
-                    .buttonStyle(.bordered)
-                }
-            } header: {
-                Label("Software Update", systemImage: "arrow.triangle.2.circlepath")
-            }
+            Spacer().frame(height: 4)
         }
-        .formStyle(.grouped)
+        .padding(20)
+        .frame(width: paneWidth)
+        .frame(maxHeight: .infinity)
     }
 }
 
-private struct PermissionStatusRow: View {
+// MARK: - Permission Row
+
+private struct PermissionRow: View {
     let title: String
     let status: String
     let isComplete: Bool
-    let primaryActionLabel: String
-    let primaryAction: () -> Void
-    let secondaryActionLabel: String
-    let secondaryAction: () -> Void
+    let grantAction: () -> Void
+    let openAction: () -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(spacing: 8) {
             Image(systemName: isComplete ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
                 .foregroundStyle(isComplete ? .green : .orange)
-                .padding(.top, 2)
+                .imageScale(.medium)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(title)
-                    .font(.headline)
+                    .font(.body)
                 Text(status)
-                    .font(.callout)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(2)
             }
 
             Spacer()
 
-            HStack(spacing: 8) {
-                Button(primaryActionLabel, action: primaryAction)
-                    .buttonStyle(.borderedProminent)
-
-                Button(secondaryActionLabel, action: secondaryAction)
-                    .buttonStyle(.bordered)
-            }
-            .controlSize(.small)
+            Button("Grant", action: grantAction)
+                .controlSize(.small)
+            Button("Open Privacy", action: openAction)
+                .controlSize(.small)
         }
-        .padding(.vertical, 2)
     }
 }

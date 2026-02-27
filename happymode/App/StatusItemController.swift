@@ -1,11 +1,13 @@
 import AppKit
 import Combine
+import ServiceManagement
 import SwiftUI
 
 @MainActor
 final class StatusItemController: NSObject, ObservableObject {
     let controller = ThemeController()
     let updateController = AppUpdateController()
+    let launchAtLoginController = LaunchAtLoginController()
 
     private var statusItem: NSStatusItem!
     private let popover = NSPopover()
@@ -126,13 +128,38 @@ final class StatusItemController: NSObject, ObservableObject {
             return
         }
 
-        let hostingController = NSHostingController(
-            rootView: SettingsView(controller: controller, updateController: updateController)
-        )
+        let tabVC = NSTabViewController()
+        tabVC.tabStyle = .toolbar
+        tabVC.title = "happymode"
 
-        let window = NSWindow(contentViewController: hostingController)
-        window.title = "happymode Settings"
-        window.styleMask = [.titled, .closable, .miniaturizable]
+        let tabs: [(String, String, NSViewController)] = [
+            ("General", "gearshape", NSHostingController(rootView: GeneralSettingsPane(
+                controller: controller,
+                launchAtLoginController: launchAtLoginController
+            ))),
+            ("Schedule", "clock", NSHostingController(rootView: ScheduleSettingsPane(
+                controller: controller
+            ))),
+            ("Location", "location", NSHostingController(rootView: LocationSettingsPane(
+                controller: controller
+            ))),
+            ("Permissions", "checkmark.shield", NSHostingController(rootView: PermissionsSettingsPane(
+                controller: controller
+            ))),
+            ("About", "info.circle", NSHostingController(rootView: AboutSettingsPane(
+                updateController: updateController
+            ))),
+        ]
+
+        for (title, icon, vc) in tabs {
+            let item = NSTabViewItem(viewController: vc)
+            item.label = title
+            item.image = NSImage(systemSymbolName: icon, accessibilityDescription: title)
+            tabVC.addTabViewItem(item)
+        }
+
+        let window = NSWindow(contentViewController: tabVC)
+        window.styleMask = [.titled, .closable]
         window.isReleasedWhenClosed = false
         window.center()
         window.makeKeyAndOrderFront(nil)
@@ -174,18 +201,66 @@ final class StatusItemController: NSObject, ObservableObject {
 
     private func observeChanges() {
         controller.objectWillChange
+            .receive(on: RunLoop.main)
             .sink { [weak self] _ in
-                DispatchQueue.main.async {
-                    self?.updateStatusItem()
-                }
+                self?.updateStatusItem()
             }
             .store(in: &cancellables)
     }
 }
 
 @MainActor
-final class AppUpdateController: ObservableObject {
-    @Published private(set) var isChecking = false
+final class LaunchAtLoginController: ObservableObject {
+    @Published private(set) var status: SMAppService.Status = .notRegistered
+
+    var isEnabled: Bool {
+        switch status {
+        case .enabled, .requiresApproval:
+            return true
+        default:
+            return false
+        }
+    }
+
+    var isAwaitingApproval: Bool {
+        status == .requiresApproval
+    }
+
+    var statusHintText: String? {
+        switch status {
+        case .enabled:
+            return nil
+        case .requiresApproval:
+            return "Approve happymode in System Settings → General → Login Items to enable auto-start."
+        case .notRegistered:
+            return nil
+        case .notFound:
+            return "happymode can’t be registered as a login item (app bundle not found)."
+        @unknown default:
+            return "Login item status is unknown."
+        }
+    }
+
+    init() {
+        refresh()
+    }
+
+    func refresh() {
+        status = SMAppService.mainApp.status
+    }
+
+    func setEnabled(_ enabled: Bool) throws {
+        if enabled {
+            try SMAppService.mainApp.register()
+        } else {
+            try SMAppService.mainApp.unregister()
+        }
+        refresh()
+    }
+}
+
+@MainActor
+final class AppUpdateController: ObservableObject {    @Published private(set) var isChecking = false
 
     private static let latestReleaseAPIURL = URL(string: "https://api.github.com/repos/happytoolin/happymode/releases/latest")!
     private static let lastCheckedDateKey = "happymode.update.lastCheckedDate"

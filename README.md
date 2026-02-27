@@ -54,6 +54,7 @@ xattr -dr com.apple.quarantine "/Applications/happymode.app"
    - `Sunrise and sunset`
    - `Custom times`
 5. Open `Options...` for location/manual coordinates and permission setup.
+6. (Optional) In `Settings -> General`, enable `Start happymode at login`.
 
 ## Screenshots
 

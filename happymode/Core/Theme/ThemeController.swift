@@ -33,7 +33,6 @@ enum AppearancePreference: String, CaseIterable, Identifiable {
             return "moon.fill"
         }
     }
-
 }
 
 enum AutomaticScheduleMode: String, CaseIterable, Identifiable {
@@ -219,16 +218,6 @@ enum MenuBarStatusFormatter {
     static func remainingTime(until date: Date, now: Date) -> String {
         let interval = max(60, ceil(date.timeIntervalSince(now) / 60) * 60)
         return formatter.string(from: interval) ?? "0 min"
-    }
-
-    static func statusText(appearancePreference: AppearancePreference,
-                            nextTransitionDate: Date?,
-                            now: Date,
-                            showRemainingTimeInMenuBar: Bool) -> String {
-        guard showRemainingTimeInMenuBar else { return "" }
-        guard appearancePreference == .automatic else { return "happymode" }
-        guard let next = nextTransitionDate else { return "happymode" }
-        return remainingTime(until: next, now: now)
     }
 }
 
@@ -473,6 +462,8 @@ final class ThemeController: NSObject, ObservableObject {
     private static let customLightMinutesKey = "customLightMinutes"
     private static let customDarkMinutesKey = "customDarkMinutes"
     private static let showRemainingTimeInMenuBarKey = "showRemainingTimeInMenuBar"
+    private static let cachedLatitudeKey = "cachedDetectedLatitude"
+    private static let cachedLongitudeKey = "cachedDetectedLongitude"
 
     private static let defaultCustomLightMinutes = 7 * 60
     private static let defaultCustomDarkMinutes = 19 * 60
@@ -538,7 +529,14 @@ final class ThemeController: NSObject, ObservableObject {
         self.manualLatitude = storedLatitude
         self.manualLongitude = storedLongitude
         self.targetIsDarkMode = Self.systemIsCurrentlyDarkMode()
-        self.locationAuthorizationStatus = CLLocationManager().authorizationStatus
+        self.locationAuthorizationStatus = locationManager.authorizationStatus
+
+        if let cachedLat = defaults.object(forKey: Self.cachedLatitudeKey) as? Double,
+           let cachedLon = defaults.object(forKey: Self.cachedLongitudeKey) as? Double,
+           (-90 ... 90).contains(cachedLat),
+           (-180 ... 180).contains(cachedLon) {
+            self.latestCoordinate = CLLocationCoordinate2D(latitude: cachedLat, longitude: cachedLon)
+        }
 
         super.init()
 
@@ -552,6 +550,14 @@ final class ThemeController: NSObject, ObservableObject {
             object: nil
         )
 
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidBecomeActive),
+            name: NSApplication.didBecomeActiveNotification,
+            object: nil
+        )
+
+        probeAndUpdateAutomationPermission()
         refreshNow(forceLocation: true)
     }
 
@@ -562,6 +568,18 @@ final class ThemeController: NSObject, ObservableObject {
 
     @objc private func calendarDayChanged() {
         refreshNow(forceLocation: true)
+    }
+
+    @objc private func appDidBecomeActive() {
+        probeAndUpdateAutomationPermission()
+        refreshNow(forceLocation: false)
+    }
+
+    private func probeAndUpdateAutomationPermission() {
+        let granted = Self.probeAutomationPermission()
+        automationPermissionKnown = true
+        automationPermissionGranted = granted
+        if granted { errorText = nil }
     }
 
     func requestLocationPermission() {
@@ -578,13 +596,9 @@ final class ThemeController: NSObject, ObservableObject {
     }
 
     func requestAutomationPermission() {
-        if Self.probeAutomationPermission() {
-            automationPermissionKnown = true
-            automationPermissionGranted = true
-            errorText = nil
-        } else {
-            automationPermissionKnown = true
-            automationPermissionGranted = false
+        probeAndUpdateAutomationPermission()
+
+        if !automationPermissionGranted {
             errorText = "Automation access not granted yet. Click Open Privacy and allow happymode under Automation."
         }
 
@@ -686,11 +700,8 @@ final class ThemeController: NSObject, ObservableObject {
     }
 
     private func resolvedCoordinate() -> CLLocationCoordinate2D? {
-        if useAutomaticLocation {
-            if let detected = latestCoordinate {
-                return detected
-            }
-            return manualCoordinates
+        if useAutomaticLocation, let detected = latestCoordinate {
+            return detected
         }
         return manualCoordinates
     }
@@ -898,6 +909,9 @@ final class ThemeController: NSObject, ObservableObject {
 
     private func applyAppearanceIfNeeded(darkMode: Bool) {
         guard darkMode != Self.systemIsCurrentlyDarkMode() else {
+            if !automationPermissionKnown {
+                probeAndUpdateAutomationPermission()
+            }
             errorText = nil
             return
         }
@@ -1007,6 +1021,8 @@ extension ThemeController: @preconcurrency CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let latest = locations.last?.coordinate {
             latestCoordinate = latest
+            defaults.set(latest.latitude, forKey: Self.cachedLatitudeKey)
+            defaults.set(latest.longitude, forKey: Self.cachedLongitudeKey)
             errorText = nil
             refreshNow(forceLocation: false)
         }
