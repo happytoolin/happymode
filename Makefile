@@ -1,4 +1,13 @@
-.PHONY: build restart
+.PHONY: build restart lint fmt fmt-check
+
+lint:
+	@swiftlint lint
+
+fmt:
+	@swiftformat .
+
+fmt-check:
+	@swiftformat --lint .
 
 build:
 	@xcodebuild \

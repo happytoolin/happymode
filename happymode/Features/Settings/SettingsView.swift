@@ -186,7 +186,7 @@ struct ScheduleSettingsPane: View {
 
     private func valueText(for kind: WeeklySolarKind) -> String {
         switch kind {
-        case .normal(let sunrise, let sunset):
+        case let .normal(sunrise, sunset):
             let sunriseText = sunrise.formatted(date: .omitted, time: .shortened)
             let sunsetText = sunset.formatted(date: .omitted, time: .shortened)
             return "\(sunriseText) – \(sunsetText)"
@@ -318,8 +318,8 @@ struct PermissionsSettingsPane: View {
 struct AboutSettingsPane: View {
     @ObservedObject var updateController: AppUpdateController
 
-    private let githubURL = URL(string: "https://github.com/happytoolin/happymode")!
-    private let websiteURL = URL(string: "https://happytoolin.com")!
+    private let githubURL = URL(string: "https://github.com/happytoolin/happymode")! // swiftlint:disable:this force_unwrapping
+    private let websiteURL = URL(string: "https://happytoolin.com")! // swiftlint:disable:this force_unwrapping
 
     private var appName: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "happymode"

@@ -1,0 +1,5 @@
+--indent 4
+--semicolons never
+--commas inline
+--ranges spaced
+--disable wrapMultilineStatementBraces,conditionalAssignment,redundantReturn,andOperator,redundantSelf,opaqueGenericParameters,wrapArguments,redundantOptionalBinding

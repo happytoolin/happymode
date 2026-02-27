@@ -1,6 +1,6 @@
 import Foundation
-import XCTest
 @testable import HappymodeCore
+import XCTest
 
 final class AppearanceScheduleEngineTests: XCTestCase {
     func testCustomScheduleBeforeLightTransition() {
@@ -16,7 +16,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .transition(let currentIsDarkMode, let nextTransition, let nextIsDarkMode):
+        case let .transition(currentIsDarkMode, nextTransition, nextIsDarkMode):
             XCTAssertTrue(currentIsDarkMode)
             XCTAssertEqual(nextTransition, lightTransition)
             XCTAssertFalse(nextIsDarkMode)
@@ -38,7 +38,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .transition(let currentIsDarkMode, let nextTransition, let nextIsDarkMode):
+        case let .transition(currentIsDarkMode, nextTransition, nextIsDarkMode):
             XCTAssertFalse(currentIsDarkMode)
             XCTAssertEqual(nextTransition, darkTransition)
             XCTAssertTrue(nextIsDarkMode)
@@ -60,7 +60,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .transition(let currentIsDarkMode, let nextTransition, let nextIsDarkMode):
+        case let .transition(currentIsDarkMode, nextTransition, nextIsDarkMode):
             XCTAssertFalse(currentIsDarkMode)
             XCTAssertEqual(nextTransition, nextDarkTransition)
             XCTAssertTrue(nextIsDarkMode)
@@ -81,7 +81,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .fixed(let isDarkMode, let message):
+        case let .fixed(isDarkMode, message):
             XCTAssertFalse(isDarkMode)
             XCTAssertEqual(message, "Custom Light and Dark times cannot be identical.")
         default:
@@ -107,7 +107,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .transition(let currentIsDarkMode, let nextTransition, let nextIsDarkMode):
+        case let .transition(currentIsDarkMode, nextTransition, nextIsDarkMode):
             XCTAssertTrue(currentIsDarkMode)
             XCTAssertEqual(nextTransition, tomorrowSunrise)
             XCTAssertFalse(nextIsDarkMode)
@@ -134,7 +134,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .transition(let currentIsDarkMode, let nextTransition, let nextIsDarkMode):
+        case let .transition(currentIsDarkMode, nextTransition, nextIsDarkMode):
             XCTAssertTrue(currentIsDarkMode)
             XCTAssertEqual(nextTransition, sunrise)
             XCTAssertFalse(nextIsDarkMode)
@@ -158,7 +158,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .fixed(let isDarkMode, let message):
+        case let .fixed(isDarkMode, message):
             XCTAssertTrue(isDarkMode)
             XCTAssertEqual(message, "Polar night: staying in Dark mode.")
         default:
@@ -182,7 +182,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .transition(let currentIsDarkMode, let nextTransition, let nextIsDarkMode):
+        case let .transition(currentIsDarkMode, nextTransition, nextIsDarkMode):
             XCTAssertTrue(currentIsDarkMode)
             XCTAssertEqual(nextTransition, midnight)
             XCTAssertFalse(nextIsDarkMode)
@@ -204,7 +204,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .transition(let currentIsDarkMode, let nextTransition, let nextIsDarkMode):
+        case let .transition(currentIsDarkMode, nextTransition, nextIsDarkMode):
             XCTAssertTrue(currentIsDarkMode)
             XCTAssertEqual(nextTransition, midnight)
             XCTAssertFalse(nextIsDarkMode)
@@ -224,7 +224,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .fixed(let isDarkMode, let message):
+        case let .fixed(isDarkMode, message):
             XCTAssertTrue(isDarkMode)
             XCTAssertEqual(message, "Polar night: staying in Dark mode.")
         default:
@@ -248,7 +248,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .transition(let currentIsDarkMode, let nextTransition, let nextIsDarkMode):
+        case let .transition(currentIsDarkMode, nextTransition, nextIsDarkMode):
             XCTAssertTrue(currentIsDarkMode)
             XCTAssertEqual(nextTransition, tomorrowSunrise)
             XCTAssertFalse(nextIsDarkMode)
@@ -272,7 +272,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .transition(let currentIsDarkMode, let nextTransition, let nextIsDarkMode):
+        case let .transition(currentIsDarkMode, nextTransition, nextIsDarkMode):
             XCTAssertFalse(currentIsDarkMode)
             XCTAssertEqual(nextTransition, tomorrowSunset)
             XCTAssertTrue(nextIsDarkMode)
@@ -292,7 +292,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .fixed(let isDarkMode, let message):
+        case let .fixed(isDarkMode, message):
             XCTAssertFalse(isDarkMode)
             XCTAssertEqual(message, "Midnight sun: staying in Light mode.")
         default:
@@ -313,7 +313,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .transition(let currentIsDarkMode, let nextTransition, let nextIsDarkMode):
+        case let .transition(currentIsDarkMode, nextTransition, nextIsDarkMode):
             XCTAssertFalse(currentIsDarkMode)
             XCTAssertEqual(nextTransition, midnight)
             XCTAssertTrue(nextIsDarkMode)
@@ -334,7 +334,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .fixed(let isDarkMode, let message):
+        case let .fixed(isDarkMode, message):
             XCTAssertFalse(isDarkMode)
             XCTAssertEqual(message, "Custom schedule is invalid.")
         default:
@@ -355,7 +355,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .transition(let currentIsDarkMode, let nextTransition, let nextIsDarkMode):
+        case let .transition(currentIsDarkMode, nextTransition, nextIsDarkMode):
             XCTAssertFalse(currentIsDarkMode)
             XCTAssertEqual(nextTransition, darkTransition)
             XCTAssertTrue(nextIsDarkMode)
@@ -377,7 +377,7 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         )
 
         switch decision {
-        case .transition(let currentIsDarkMode, let nextTransition, let nextIsDarkMode):
+        case let .transition(currentIsDarkMode, nextTransition, nextIsDarkMode):
             XCTAssertTrue(currentIsDarkMode)
             XCTAssertEqual(nextTransition, nextLightTransition)
             XCTAssertFalse(nextIsDarkMode)

@@ -10,7 +10,9 @@ enum AppearancePreference: String, CaseIterable, Identifiable {
 
     static let menuOrder: [AppearancePreference] = [.forceDark, .automatic, .forceLight]
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 
     var title: String {
         switch self {
@@ -41,7 +43,9 @@ enum AutomaticScheduleMode: String, CaseIterable, Identifiable {
 
     static let menuOrder: [AutomaticScheduleMode] = [.sunriseSunset, .customTimes]
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 
     var title: String {
         switch self {
@@ -75,7 +79,7 @@ enum AppearanceScheduleEngine {
         switch today {
         case .alwaysDark:
             switch tomorrow {
-            case .normal(let nextSunrise, _):
+            case let .normal(nextSunrise, _):
                 return .transition(currentIsDarkMode: true, nextTransition: nextSunrise, nextIsDarkMode: false)
             case .alwaysDark:
                 return .fixed(isDarkMode: true, message: "Polar night: staying in Dark mode.")
@@ -89,7 +93,7 @@ enum AppearanceScheduleEngine {
 
         case .alwaysLight:
             switch tomorrow {
-            case .normal(_, let nextSunset):
+            case let .normal(_, nextSunset):
                 return .transition(currentIsDarkMode: false, nextTransition: nextSunset, nextIsDarkMode: true)
             case .alwaysDark:
                 return .transition(
@@ -101,7 +105,7 @@ enum AppearanceScheduleEngine {
                 return .fixed(isDarkMode: false, message: "Midnight sun: staying in Light mode.")
             }
 
-        case .normal(let sunrise, let sunset):
+        case let .normal(sunrise, sunset):
             if now < sunrise {
                 return .transition(currentIsDarkMode: true, nextTransition: sunrise, nextIsDarkMode: false)
             }
@@ -111,7 +115,7 @@ enum AppearanceScheduleEngine {
             }
 
             switch tomorrow {
-            case .normal(let nextSunrise, _):
+            case let .normal(nextSunrise, _):
                 return .transition(currentIsDarkMode: true, nextTransition: nextSunrise, nextIsDarkMode: false)
             case .alwaysDark:
                 return .fixed(isDarkMode: true, message: "Polar night: staying in Dark mode.")
@@ -137,7 +141,8 @@ enum AppearanceScheduleEngine {
         guard let lightHour = lightTime.hour,
               let lightMinute = lightTime.minute,
               let darkHour = darkTime.hour,
-              let darkMinute = darkTime.minute else {
+              let darkMinute = darkTime.minute
+        else {
             return .fixed(isDarkMode: false, message: "Custom schedule is invalid.")
         }
 
@@ -178,7 +183,8 @@ enum AppearanceScheduleEngine {
                     return lhs.precedence < rhs.precedence
                 }
                 return lhs.date < rhs.date
-            }) else {
+            })
+        else {
             return .fixed(isDarkMode: false, message: "Custom schedule is invalid.")
         }
 
@@ -208,11 +214,11 @@ enum AppearanceScheduleEngine {
 
 enum MenuBarStatusFormatter {
     private static let formatter: DateComponentsFormatter = {
-        let f = DateComponentsFormatter()
-        f.allowedUnits = [.hour, .minute]
-        f.unitsStyle = .abbreviated
-        f.zeroFormattingBehavior = .dropLeading
-        return f
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute]
+        formatter.unitsStyle = .abbreviated
+        formatter.zeroFormattingBehavior = .dropLeading
+        return formatter
     }()
 
     static func remainingTime(until date: Date, now: Date) -> String {
@@ -231,7 +237,9 @@ struct WeeklySolarDay: Identifiable {
     let date: Date
     let kind: WeeklySolarKind
 
-    var id: Date { date }
+    var id: Date {
+        date
+    }
 }
 
 @MainActor
@@ -520,22 +528,22 @@ final class ThemeController: NSObject, ObservableObject {
         let storedDarkMinutes = defaults.object(forKey: Self.customDarkMinutesKey) as? Int ?? Self.defaultCustomDarkMinutes
         let storedShowRemainingTime = defaults.object(forKey: Self.showRemainingTimeInMenuBarKey) as? Bool ?? true
 
-        self.useAutomaticLocation = storedAutomatic
-        self.appearancePreference = storedPreference
-        self.automaticScheduleMode = storedScheduleMode
-        self.customLightTime = Self.dateFromMinutesSinceMidnight(storedLightMinutes)
-        self.customDarkTime = Self.dateFromMinutesSinceMidnight(storedDarkMinutes)
-        self.showRemainingTimeInMenuBar = storedShowRemainingTime
-        self.manualLatitude = storedLatitude
-        self.manualLongitude = storedLongitude
-        self.targetIsDarkMode = Self.systemIsCurrentlyDarkMode()
-        self.locationAuthorizationStatus = locationManager.authorizationStatus
+        useAutomaticLocation = storedAutomatic
+        appearancePreference = storedPreference
+        automaticScheduleMode = storedScheduleMode
+        customLightTime = Self.dateFromMinutesSinceMidnight(storedLightMinutes)
+        customDarkTime = Self.dateFromMinutesSinceMidnight(storedDarkMinutes)
+        showRemainingTimeInMenuBar = storedShowRemainingTime
+        manualLatitude = storedLatitude
+        manualLongitude = storedLongitude
+        targetIsDarkMode = Self.systemIsCurrentlyDarkMode()
+        locationAuthorizationStatus = locationManager.authorizationStatus
 
         if let cachedLat = defaults.object(forKey: Self.cachedLatitudeKey) as? Double,
            let cachedLon = defaults.object(forKey: Self.cachedLongitudeKey) as? Double,
            (-90 ... 90).contains(cachedLat),
            (-180 ... 180).contains(cachedLon) {
-            self.latestCoordinate = CLLocationCoordinate2D(latitude: cachedLat, longitude: cachedLon)
+            latestCoordinate = CLLocationCoordinate2D(latitude: cachedLat, longitude: cachedLon)
         }
 
         super.init()
@@ -633,7 +641,7 @@ final class ThemeController: NSObject, ObservableObject {
         locationAuthorizationStatus = locationManager.authorizationStatus
         let now = Date()
 
-        if useAutomaticLocation && requiresLocationForActiveSchedule {
+        if useAutomaticLocation, requiresLocationForActiveSchedule {
             requestLocationIfPossible(force: forceLocation)
         }
 
@@ -641,7 +649,7 @@ final class ThemeController: NSObject, ObservableObject {
 
         if automaticScheduleMode == .sunriseSunset {
             if let coordinate {
-                if latestCoordinate != nil && useAutomaticLocation {
+                if latestCoordinate != nil, useAutomaticLocation {
                     locationStatusText = "Using detected location"
                 } else {
                     locationStatusText = "Using manual coordinates"
@@ -710,7 +718,8 @@ final class ThemeController: NSObject, ObservableObject {
         guard let latitude = manualLatitude,
               let longitude = manualLongitude,
               (-90 ... 90).contains(latitude),
-              (-180 ... 180).contains(longitude) else {
+              (-180 ... 180).contains(longitude)
+        else {
             return nil
         }
 
@@ -723,13 +732,13 @@ final class ThemeController: NSObject, ObservableObject {
 
         var days: [WeeklySolarDay] = []
 
-        for offset in 0..<7 {
+        for offset in 0 ..< 7 {
             guard let dayDate = calendar.date(byAdding: .day, value: offset, to: startOfToday) else {
                 continue
             }
 
             switch SolarCalculator.solarDay(for: dayDate, coordinate: coordinate) {
-            case .normal(let sunrise, let sunset):
+            case let .normal(sunrise, sunset):
                 days.append(WeeklySolarDay(date: dayDate, kind: .normal(sunrise: sunrise, sunset: sunset)))
             case .alwaysDark:
                 days.append(WeeklySolarDay(date: dayDate, kind: .alwaysDark))
@@ -742,7 +751,7 @@ final class ThemeController: NSObject, ObservableObject {
 
         if let today = days.first {
             switch today.kind {
-            case .normal(let sunrise, let sunset):
+            case let .normal(sunrise, sunset):
                 currentSunriseText = formatTime(sunrise)
                 currentSunsetText = formatTime(sunset)
 
@@ -803,15 +812,15 @@ final class ThemeController: NSObject, ObservableObject {
         apply(decision: decision, now: now)
     }
 
-    private func apply(decision: AutomaticAppearanceDecision, now: Date) {
+    private func apply(decision: AutomaticAppearanceDecision, now _: Date) {
         switch decision {
-        case .fixed(let isDarkMode, let message):
+        case let .fixed(isDarkMode, message):
             targetIsDarkMode = isDarkMode
             nextTransitionText = message
             nextTransitionDate = nil
             applyAppearanceIfNeeded(darkMode: isDarkMode)
 
-        case .transition(let currentIsDarkMode, let nextTransition, let nextIsDarkMode):
+        case let .transition(currentIsDarkMode, nextTransition, nextIsDarkMode):
             targetIsDarkMode = currentIsDarkMode
             nextTransitionText = "Next: \(formatTime(nextTransition)) -> \(nextIsDarkMode ? "Dark" : "Light") mode"
             nextTransitionDate = nextTransition
@@ -860,7 +869,8 @@ final class ThemeController: NSObject, ObservableObject {
 
     private func updateMenuBarCountdownText(now: Date) {
         guard shouldShowMenuBarCountdown,
-              let nextTransitionDate else {
+              let nextTransitionDate
+        else {
             menuBarCountdownText = ""
             return
         }
@@ -873,7 +883,8 @@ final class ThemeController: NSObject, ObservableObject {
         menuBarCountdownTask = nil
 
         guard shouldShowMenuBarCountdown,
-              let nextTransitionDate else {
+              let nextTransitionDate
+        else {
             return
         }
 
@@ -1010,15 +1021,15 @@ extension ThemeController: @preconcurrency CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         locationAuthorizationStatus = manager.authorizationStatus
 
-        if requiresLocationForActiveSchedule &&
-            (manager.authorizationStatus == .authorized || manager.authorizationStatus == .authorizedAlways) {
+        if requiresLocationForActiveSchedule,
+           manager.authorizationStatus == .authorized || manager.authorizationStatus == .authorizedAlways {
             manager.requestLocation()
         }
 
         refreshNow(forceLocation: false)
     }
 
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    func locationManager(_: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let latest = locations.last?.coordinate {
             latestCoordinate = latest
             defaults.set(latest.latitude, forKey: Self.cachedLatitudeKey)
@@ -1028,7 +1039,7 @@ extension ThemeController: @preconcurrency CLLocationManagerDelegate {
         }
     }
 
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+    func locationManager(_: CLLocationManager, didFailWithError _: Error) {
         if !requiresLocationForActiveSchedule {
             locationStatusText = "Location unavailable (not required in current mode)."
             return

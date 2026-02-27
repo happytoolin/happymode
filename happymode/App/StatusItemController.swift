@@ -9,7 +9,7 @@ final class StatusItemController: NSObject, ObservableObject {
     let updateController = AppUpdateController()
     let launchAtLoginController = LaunchAtLoginController()
 
-    private var statusItem: NSStatusItem!
+    private var statusItem: NSStatusItem! // swiftlint:disable:this implicitly_unwrapped_optional
     private let popover = NSPopover()
     private var settingsWindow: NSWindow?
     private var cancellables = Set<AnyCancellable>()
@@ -52,7 +52,7 @@ final class StatusItemController: NSObject, ObservableObject {
 
     // MARK: - Click Handling
 
-    @objc private func statusItemClicked(_ sender: NSStatusBarButton) {
+    @objc private func statusItemClicked(_: NSStatusBarButton) {
         guard let event = NSApp.currentEvent else { return }
 
         if event.type == .rightMouseUp {
@@ -132,29 +132,35 @@ final class StatusItemController: NSObject, ObservableObject {
         tabVC.tabStyle = .toolbar
         tabVC.title = "happymode"
 
-        let tabs: [(String, String, NSViewController)] = [
-            ("General", "gearshape", NSHostingController(rootView: GeneralSettingsPane(
+        struct TabItem {
+            let title: String
+            let icon: String
+            let viewController: NSViewController
+        }
+
+        let tabs: [TabItem] = [
+            TabItem(title: "General", icon: "gearshape", viewController: NSHostingController(rootView: GeneralSettingsPane(
                 controller: controller,
                 launchAtLoginController: launchAtLoginController
             ))),
-            ("Schedule", "clock", NSHostingController(rootView: ScheduleSettingsPane(
+            TabItem(title: "Schedule", icon: "clock", viewController: NSHostingController(rootView: ScheduleSettingsPane(
                 controller: controller
             ))),
-            ("Location", "location", NSHostingController(rootView: LocationSettingsPane(
+            TabItem(title: "Location", icon: "location", viewController: NSHostingController(rootView: LocationSettingsPane(
                 controller: controller
             ))),
-            ("Permissions", "checkmark.shield", NSHostingController(rootView: PermissionsSettingsPane(
+            TabItem(title: "Permissions", icon: "checkmark.shield", viewController: NSHostingController(rootView: PermissionsSettingsPane(
                 controller: controller
             ))),
-            ("About", "info.circle", NSHostingController(rootView: AboutSettingsPane(
+            TabItem(title: "About", icon: "info.circle", viewController: NSHostingController(rootView: AboutSettingsPane(
                 updateController: updateController
-            ))),
+            )))
         ]
 
-        for (title, icon, vc) in tabs {
-            let item = NSTabViewItem(viewController: vc)
-            item.label = title
-            item.image = NSImage(systemSymbolName: icon, accessibilityDescription: title)
+        for tab in tabs {
+            let item = NSTabViewItem(viewController: tab.viewController)
+            item.label = tab.title
+            item.image = NSImage(systemSymbolName: tab.icon, accessibilityDescription: tab.title)
             tabVC.addTabViewItem(item)
         }
 
@@ -260,9 +266,9 @@ final class LaunchAtLoginController: ObservableObject {
 }
 
 @MainActor
-final class AppUpdateController: ObservableObject {    @Published private(set) var isChecking = false
+final class AppUpdateController: ObservableObject { @Published private(set) var isChecking = false
 
-    private static let latestReleaseAPIURL = URL(string: "https://api.github.com/repos/happytoolin/happymode/releases/latest")!
+    private static let latestReleaseAPIURL = URL(string: "https://api.github.com/repos/happytoolin/happymode/releases/latest")! // swiftlint:disable:this force_unwrapping
     private static let lastCheckedDateKey = "happymode.update.lastCheckedDate"
     private static let githubUserAgent = "happymode-updater"
 
@@ -329,7 +335,7 @@ final class AppUpdateController: ObservableObject {    @Published private(set) v
         let latestVersion = normalizedVersionString(release.tagName)
 
         if latestVersion.compare(currentVersion, options: .numeric) == .orderedDescending {
-            if !userInitiated && hasPresentedAutomaticAlertThisLaunch {
+            if !userInitiated, hasPresentedAutomaticAlertThisLaunch {
                 return
             }
 
@@ -391,7 +397,7 @@ final class AppUpdateController: ObservableObject {    @Published private(set) v
     }
 
     private struct GitHubRelease: Decodable {
-        private static let fallbackURL = URL(string: "https://github.com/happytoolin/happymode/releases/latest")!
+        private static let fallbackURL = URL(string: "https://github.com/happytoolin/happymode/releases/latest")! // swiftlint:disable:this force_unwrapping
 
         let tagName: String
         let htmlURLString: String?
@@ -418,7 +424,7 @@ final class AppUpdateController: ObservableObject {    @Published private(set) v
             switch self {
             case .invalidResponse:
                 return "The update server returned an invalid response."
-            case .httpStatus(let status):
+            case let .httpStatus(status):
                 return "The update server returned status code \(status)."
             case .invalidPayload:
                 return "The update data could not be read."

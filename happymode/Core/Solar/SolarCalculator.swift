@@ -56,9 +56,9 @@ enum SolarCalculator {
 
         let lngHour = longitude / 15
         let localHour: Double = sunrise ? 6 : 18
-        let t = Double(dayOfYear) + ((localHour - lngHour) / 24)
+        let tempTime = Double(dayOfYear) + ((localHour - lngHour) / 24)
 
-        let meanAnomaly = (0.9856 * t) - 3.289
+        let meanAnomaly = (0.9856 * tempTime) - 3.289
         var trueLongitude = meanAnomaly
             + (1.916 * sin(meanAnomaly * .pi / 180))
             + (0.020 * sin(2 * meanAnomaly * .pi / 180))
