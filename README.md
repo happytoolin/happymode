@@ -11,13 +11,17 @@ Native macOS menu bar app that controls Light/Dark appearance based on sunrise/s
 
 ## Highlights
 
-- Menu bar utility (no Dock icon) with popup controls and right-click context menu.
+- Menu bar utility (no Dock icon) with left-click popup and right-click context menu.
 - `Auto`, `Light`, and `Dark` modes.
 - Two scheduling options:
   - `Sunrise and sunset` (automatic by location or manual coordinates).
   - `Custom times` (user-defined daily switch times).
-- Countdown in the menu bar for time remaining to next sunrise/sunset transition.
+- Weekly preview of sunrise/sunset times, including polar night and midnight sun indicators.
+- Optional countdown in menu bar for time remaining to next transition.
 - Local solar calculations (no external API calls).
+- Automatic update checking (once daily) with manual "Check for Updates" option.
+- Native macOS login item integration with System Settings approval flow.
+- Five settings tabs: General, Schedule, Location, Permissions, and About.
 
 ## Install
 
@@ -47,32 +51,60 @@ xattr -dr com.apple.quarantine "/Applications/happymode.app"
 
 ## Usage
 
+### Menu Bar
+
+**Left-click** the menu bar icon to open the popup:
+- Set `Mode` to `Auto`, `Light`, or `Dark`.
+- In `Auto`, choose between `Sunrise and sunset` or `Custom times`.
+- View next switch countdown and today's sunrise/sunset times.
+- `Refresh` to force location refresh.
+- `Settings…` (Cmd+,) to open settings window.
+- `Quit` (Cmd+Q) to exit.
+
+**Right-click** the menu bar icon for quick access:
+- Switch between `Auto`, `Light`, and `Dark` modes.
+- `Settings…` to open settings window.
+- `Check for Updates…` to manually check for new releases.
+- `Quit happymode` to exit.
+
+### Settings
+
+Open `Settings…` to configure:
+
+- **General**: Theme picker, menu bar countdown toggle, startup at login.
+- **Schedule**: Choose between sunrise/sunset or custom times, view weekly preview.
+- **Location**: Automatic location detection or manual latitude/longitude coordinates.
+- **Permissions**: Grant Location and Automation permissions with quick links to System Settings.
+- **About**: App version, GitHub repository, website, and update check button.
+
+### Initial Setup
+
 1. Launch `happymode`.
-2. Click the menu bar icon to open the popup.
-3. Set `Mode` to `Auto`, `Light`, or `Dark`.
-4. In `Auto`, choose either:
-   - `Sunrise and sunset`
-   - `Custom times`
-5. Open `Options...` for location/manual coordinates and permission setup.
-6. (Optional) In `Settings -> General`, enable `Start happymode at login`.
+2. Click the menu bar icon and set your preferred `Mode`.
+3. Open `Settings…` to grant permissions:
+   - **Location**: Required for automatic sunrise/sunset calculations.
+   - **Automation**: Required to switch macOS appearance.
+4. (Optional) Enable `Start happymode at login` in General settings.
 
 ## Screenshots
 
-![Menu bar](docs/screenshots/menu-bar.png)
-![Options popup](docs/screenshots/settings.png)
+![Menu bar](docs/screenshots/menu.png)
+![General settings](docs/screenshots/general-settings.png)
+![Schedule settings](docs/screenshots/schedule-settings.png)
+![Permissions settings](docs/screenshots/permissions-settings.png)
 
 ## Permissions
 
-- `Automation -> System Events`: required to apply macOS appearance.
-- `Location Services`: required only for `Sunrise and sunset` in automatic location mode.
+- **Location Services**: Required for automatic sunrise/sunset calculations. Can be disabled if using manual coordinates or custom times.
+- **Automation -> System Events**: Required to apply macOS appearance changes.
 
-If location is denied, disable automatic location and set manual latitude/longitude in `Options...`.
+Both permissions can be granted from the `Permissions` settings tab, which provides direct links to System Privacy settings. If location is denied, you can disable automatic location and set manual latitude/longitude in the `Location` settings tab.
 
 ## Development
 
 ### Requirements
 
-- macOS 15+
+- macOS 15.0
 - Xcode 16+
 - Swift 5.10+
 
@@ -122,9 +154,11 @@ If this secret is missing, the release still succeeds and tap update is skipped.
 ## Troubleshooting
 
 - App does not switch appearance:
-  - Open `Options...`, grant Automation permission, and allow `happymode` under Privacy settings.
+  - Open `Settings…`, go to `Permissions`, grant Automation permission, and allow `happymode` under Privacy settings.
 - Sunrise/sunset schedule is unavailable:
-  - Grant Location permission or switch to manual coordinates/custom times.
+  - Grant Location permission in `Permissions`, or switch to manual coordinates/custom times in `Location` or `Schedule` settings.
+- App shows warning icon in menu bar:
+  - Open the popup and follow the setup guidance to grant required permissions.
 
 ## License
 
