@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.6] - 2026-03-01
+
+### Fixed
+
+- Prevented stale sunrise/sunset transition times from causing rapid refresh loops or requiring app restarts.
+- Added additional solar scheduling guards for invalid/edge transition data and expanded unit test coverage.
+
+## [0.0.5] - 2026-02-27
+
+### Added
+
+- SwiftLint and SwiftFormat tooling for consistent formatting and linting.
+
+### Fixed
+
+- Fixed permissions state getting lost after relaunch and cached last detected location to improve reliability.
+
+### Changed
+
+- Updated app bundle version metadata to `CFBundleShortVersionString = 0.0.5` and `CFBundleVersion = 5`.
+
 ## [0.0.4] - 2026-02-25
 
 ### Added

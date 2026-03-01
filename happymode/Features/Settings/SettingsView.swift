@@ -326,11 +326,11 @@ struct AboutSettingsPane: View {
     }
 
     private var appVersion: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.5"
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.6"
     }
 
     private var appBuild: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "5"
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "6"
     }
 
     var body: some View {
