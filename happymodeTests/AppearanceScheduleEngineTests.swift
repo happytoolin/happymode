@@ -116,6 +116,34 @@ final class AppearanceScheduleEngineTests: XCTestCase {
         }
     }
 
+    func testSolarScheduleInvalidSunriseSunsetOrderingFallsBackToTomorrowSunrise() {
+        let calendar = utcCalendar
+        let now = makeDate(year: 2026, month: 2, day: 24, hour: 12, minute: 0, calendar: calendar)
+        let tomorrowSunrise = makeDate(year: 2026, month: 2, day: 25, hour: 7, minute: 0, calendar: calendar)
+
+        let decision = AppearanceScheduleEngine.evaluateSolar(
+            now: now,
+            today: .normal(
+                sunrise: makeDate(year: 2026, month: 2, day: 24, hour: 18, minute: 0, calendar: calendar),
+                sunset: makeDate(year: 2026, month: 2, day: 24, hour: 6, minute: 0, calendar: calendar)
+            ),
+            tomorrow: .normal(
+                sunrise: tomorrowSunrise,
+                sunset: makeDate(year: 2026, month: 2, day: 25, hour: 18, minute: 0, calendar: calendar)
+            ),
+            calendar: calendar
+        )
+
+        switch decision {
+        case let .transition(currentIsDarkMode, nextTransition, nextIsDarkMode):
+            XCTAssertTrue(currentIsDarkMode)
+            XCTAssertEqual(nextTransition, tomorrowSunrise)
+            XCTAssertFalse(nextIsDarkMode)
+        default:
+            XCTFail("Expected transition decision")
+        }
+    }
+
     func testSolarScheduleBeforeSunriseTransitionsToSunrise() {
         let calendar = utcCalendar
         let now = makeDate(year: 2026, month: 2, day: 24, hour: 5, minute: 30, calendar: calendar)
@@ -138,6 +166,31 @@ final class AppearanceScheduleEngineTests: XCTestCase {
             XCTAssertTrue(currentIsDarkMode)
             XCTAssertEqual(nextTransition, sunrise)
             XCTAssertFalse(nextIsDarkMode)
+        default:
+            XCTFail("Expected transition decision")
+        }
+    }
+
+    func testSolarScheduleWhenTomorrowTransitionIsInPastFallsBackToMidnight() {
+        let calendar = utcCalendar
+        let now = makeDate(year: 2026, month: 2, day: 24, hour: 20, minute: 0, calendar: calendar)
+        let midnight = makeDate(year: 2026, month: 2, day: 25, hour: 0, minute: 0, calendar: calendar)
+
+        let decision = AppearanceScheduleEngine.evaluateSolar(
+            now: now,
+            today: .alwaysLight,
+            tomorrow: .normal(
+                sunrise: makeDate(year: 2026, month: 2, day: 24, hour: 7, minute: 0, calendar: calendar),
+                sunset: makeDate(year: 2026, month: 2, day: 24, hour: 19, minute: 0, calendar: calendar)
+            ),
+            calendar: calendar
+        )
+
+        switch decision {
+        case let .transition(currentIsDarkMode, nextTransition, nextIsDarkMode):
+            XCTAssertFalse(currentIsDarkMode)
+            XCTAssertEqual(nextTransition, midnight)
+            XCTAssertTrue(nextIsDarkMode)
         default:
             XCTFail("Expected transition decision")
         }
