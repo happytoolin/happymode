@@ -78,60 +78,99 @@ enum AppearanceScheduleEngine {
                               calendar: Calendar = .current) -> AutomaticAppearanceDecision {
         switch today {
         case .alwaysDark:
-            switch tomorrow {
-            case let .normal(nextSunrise, _):
-                return .transition(currentIsDarkMode: true, nextTransition: nextSunrise, nextIsDarkMode: false)
-            case .alwaysDark:
-                return .fixed(isDarkMode: true, message: "Polar night: staying in Dark mode.")
-            case .alwaysLight:
-                return .transition(
-                    currentIsDarkMode: true,
-                    nextTransition: startOfTomorrow(from: now, calendar: calendar),
-                    nextIsDarkMode: false
-                )
-            }
-
+            return evaluateAlwaysDark(now: now, tomorrow: tomorrow, calendar: calendar)
         case .alwaysLight:
-            switch tomorrow {
-            case let .normal(_, nextSunset):
-                return .transition(currentIsDarkMode: false, nextTransition: nextSunset, nextIsDarkMode: true)
-            case .alwaysDark:
-                return .transition(
-                    currentIsDarkMode: false,
-                    nextTransition: startOfTomorrow(from: now, calendar: calendar),
-                    nextIsDarkMode: true
-                )
-            case .alwaysLight:
-                return .fixed(isDarkMode: false, message: "Midnight sun: staying in Light mode.")
-            }
-
+            return evaluateAlwaysLight(now: now, tomorrow: tomorrow, calendar: calendar)
         case let .normal(sunrise, sunset):
-            if now < sunrise {
-                return .transition(currentIsDarkMode: true, nextTransition: sunrise, nextIsDarkMode: false)
-            }
-
-            if now < sunset {
-                return .transition(currentIsDarkMode: false, nextTransition: sunset, nextIsDarkMode: true)
-            }
-
-            switch tomorrow {
-            case let .normal(nextSunrise, _):
-                return .transition(currentIsDarkMode: true, nextTransition: nextSunrise, nextIsDarkMode: false)
-            case .alwaysDark:
-                return .fixed(isDarkMode: true, message: "Polar night: staying in Dark mode.")
-            case .alwaysLight:
-                return .transition(
-                    currentIsDarkMode: true,
-                    nextTransition: startOfTomorrow(from: now, calendar: calendar),
-                    nextIsDarkMode: false
-                )
-            }
+            return evaluateNormal(now: now, sunrise: sunrise, sunset: sunset, tomorrow: tomorrow, calendar: calendar)
         }
     }
 
-    private static func startOfTomorrow(from now: Date, calendar: Calendar) -> Date {
+    private static func safeStartOfTomorrow(from now: Date, calendar: Calendar) -> Date {
         let startOfToday = calendar.startOfDay(for: now)
-        return calendar.date(byAdding: .day, value: 1, to: startOfToday) ?? now
+        guard let startOfTomorrow = calendar.date(byAdding: .day, value: 1, to: startOfToday) else {
+            return now.addingTimeInterval(60)
+        }
+
+        if startOfTomorrow <= now {
+            return now.addingTimeInterval(60)
+        }
+
+        return startOfTomorrow
+    }
+
+    private static func futureTransition(_ candidate: Date, now: Date, calendar: Calendar) -> Date {
+        candidate > now ? candidate : safeStartOfTomorrow(from: now, calendar: calendar)
+    }
+
+    private static func evaluateAlwaysDark(now: Date,
+                                           tomorrow: SolarDayType,
+                                           calendar: Calendar) -> AutomaticAppearanceDecision {
+        switch tomorrow {
+        case let .normal(nextSunrise, _):
+            return .transition(
+                currentIsDarkMode: true,
+                nextTransition: futureTransition(nextSunrise, now: now, calendar: calendar),
+                nextIsDarkMode: false
+            )
+        case .alwaysDark:
+            return .fixed(isDarkMode: true, message: "Polar night: staying in Dark mode.")
+        case .alwaysLight:
+            return .transition(
+                currentIsDarkMode: true,
+                nextTransition: safeStartOfTomorrow(from: now, calendar: calendar),
+                nextIsDarkMode: false
+            )
+        }
+    }
+
+    private static func evaluateAlwaysLight(now: Date,
+                                            tomorrow: SolarDayType,
+                                            calendar: Calendar) -> AutomaticAppearanceDecision {
+        switch tomorrow {
+        case let .normal(_, nextSunset):
+            return .transition(
+                currentIsDarkMode: false,
+                nextTransition: futureTransition(nextSunset, now: now, calendar: calendar),
+                nextIsDarkMode: true
+            )
+        case .alwaysDark:
+            return .transition(
+                currentIsDarkMode: false,
+                nextTransition: safeStartOfTomorrow(from: now, calendar: calendar),
+                nextIsDarkMode: true
+            )
+        case .alwaysLight:
+            return .fixed(isDarkMode: false, message: "Midnight sun: staying in Light mode.")
+        }
+    }
+
+    private static func evaluateNormal(now: Date,
+                                       sunrise: Date,
+                                       sunset: Date,
+                                       tomorrow: SolarDayType,
+                                       calendar: Calendar) -> AutomaticAppearanceDecision {
+        if sunrise >= sunset {
+            return evaluateAlwaysDark(now: now, tomorrow: tomorrow, calendar: calendar)
+        }
+
+        if now < sunrise {
+            return .transition(
+                currentIsDarkMode: true,
+                nextTransition: futureTransition(sunrise, now: now, calendar: calendar),
+                nextIsDarkMode: false
+            )
+        }
+
+        if now < sunset {
+            return .transition(
+                currentIsDarkMode: false,
+                nextTransition: futureTransition(sunset, now: now, calendar: calendar),
+                nextIsDarkMode: true
+            )
+        }
+
+        return evaluateAlwaysDark(now: now, tomorrow: tomorrow, calendar: calendar)
     }
 
     static func evaluateCustom(now: Date,
@@ -224,6 +263,13 @@ enum MenuBarStatusFormatter {
     static func remainingTime(until date: Date, now: Date) -> String {
         let interval = max(60, ceil(date.timeIntervalSince(now) / 60) * 60)
         return formatter.string(from: interval) ?? "0 min"
+    }
+
+    static func nextCountdownUpdateDate(now: Date, nextTransitionDate: Date) -> Date {
+        let remainder = now.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 60)
+        let secondsToNextMinute = remainder == 0 ? 60 : 60 - remainder
+        let minuteTickDate = now.addingTimeInterval(secondsToNextMinute)
+        return nextTransitionDate > now ? min(nextTransitionDate, minuteTickDate) : minuteTickDate
     }
 }
 
@@ -483,6 +529,7 @@ final class ThemeController: NSObject, ObservableObject {
     private var menuBarCountdownTask: Task<Void, Never>?
     private var lastLocationRequestDate: Date?
     private var isBatchUpdatingManualCoordinates = false
+    private var staleTransitionRetryCount = 0
 
     private var missingSetupLabels: [String] {
         var missing: [String] = []
@@ -812,7 +859,7 @@ final class ThemeController: NSObject, ObservableObject {
         apply(decision: decision, now: now)
     }
 
-    private func apply(decision: AutomaticAppearanceDecision, now _: Date) {
+    private func apply(decision: AutomaticAppearanceDecision, now: Date) {
         switch decision {
         case let .fixed(isDarkMode, message):
             targetIsDarkMode = isDarkMode
@@ -821,6 +868,13 @@ final class ThemeController: NSObject, ObservableObject {
             applyAppearanceIfNeeded(darkMode: isDarkMode)
 
         case let .transition(currentIsDarkMode, nextTransition, nextIsDarkMode):
+            if nextTransition <= now {
+                let current = Self.systemIsCurrentlyDarkMode()
+                targetIsDarkMode = current
+                nextTransitionText = "Recalculating schedule..."
+                nextTransitionDate = nextTransition
+                return
+            }
             targetIsDarkMode = currentIsDarkMode
             nextTransitionText = "Next: \(formatTime(nextTransition)) -> \(nextIsDarkMode ? "Dark" : "Light") mode"
             nextTransitionDate = nextTransition
@@ -834,8 +888,23 @@ final class ThemeController: NSObject, ObservableObject {
 
         var candidates: [Date] = []
 
-        if appearancePreference == .automatic, let nextTransitionDate {
-            candidates.append(nextTransitionDate)
+        if appearancePreference == .automatic {
+            if let nextTransitionDate {
+                if nextTransitionDate > now {
+                    staleTransitionRetryCount = 0
+                    candidates.append(nextTransitionDate)
+                } else {
+                    staleTransitionRetryCount = min(staleTransitionRetryCount + 1, 6)
+                    let retryDelaySeconds = min(60.0, pow(2.0, Double(staleTransitionRetryCount)))
+                    candidates.append(now.addingTimeInterval(retryDelaySeconds))
+                }
+            }
+
+            let calendar = Calendar.current
+            let startOfToday = calendar.startOfDay(for: now)
+            if let startOfTomorrow = calendar.date(byAdding: .day, value: 1, to: startOfToday) {
+                candidates.append(startOfTomorrow)
+            }
         }
 
         if useAutomaticLocation,
@@ -849,14 +918,11 @@ final class ThemeController: NSObject, ObservableObject {
         }
 
         let delay = nextRefreshDate.timeIntervalSince(now)
-        guard delay > 0 else {
-            refreshNow(forceLocation: false)
-            return
-        }
+        let safeDelay = max(0.25, delay)
 
         scheduledRefreshTask = Task { [weak self] in
             do {
-                try await Task.sleep(for: .seconds(delay))
+                try await Task.sleep(for: .seconds(safeDelay))
             } catch {
                 return
             }
@@ -869,7 +935,8 @@ final class ThemeController: NSObject, ObservableObject {
 
     private func updateMenuBarCountdownText(now: Date) {
         guard shouldShowMenuBarCountdown,
-              let nextTransitionDate
+              let nextTransitionDate,
+              nextTransitionDate > now
         else {
             menuBarCountdownText = ""
             return
@@ -888,21 +955,13 @@ final class ThemeController: NSObject, ObservableObject {
             return
         }
 
-        let remainder = now.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 60)
-        let secondsToNextMinute = remainder == 0 ? 60 : 60 - remainder
-        let nextUpdateDate = min(nextTransitionDate, now.addingTimeInterval(secondsToNextMinute))
+        let nextUpdateDate = MenuBarStatusFormatter.nextCountdownUpdateDate(now: now, nextTransitionDate: nextTransitionDate)
         let delay = nextUpdateDate.timeIntervalSince(now)
-
-        guard delay > 0 else {
-            let current = Date()
-            updateMenuBarCountdownText(now: current)
-            scheduleMenuBarCountdownUpdate(now: current)
-            return
-        }
+        let safeDelay = max(0.25, delay)
 
         menuBarCountdownTask = Task { [weak self] in
             do {
-                try await Task.sleep(for: .seconds(delay))
+                try await Task.sleep(for: .seconds(safeDelay))
             } catch {
                 return
             }
