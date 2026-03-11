@@ -7,15 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-			0287722DE211E09938FC198F /* ThemeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2A4DDCAF699250D5EF6012D /* ThemeController.swift */; };
-			2AF7C7AB3D7B7484E90E4BE3 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CFBF5AC0ED953AF3BBB168C1 /* Cocoa.framework */; };
-			39282ECC26B57104EA10FA07 /* SolarCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E24B77649F24352D1540B80 /* SolarCalculator.swift */; };
-			432B7EEC6E4E024BF6E00BF1 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05DF75CBE1DB50C10F66E6AC /* MenuBarView.swift */; };
-				5D5FA8F017267C5A5A4E8F91 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64CA2B496F1DB06899315924 /* SettingsView.swift */; };
-				80E107762F6C668AEB00D896 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 58CBF4DB865C20A8A7F54B1F /* Assets.xcassets */; };
-				A1AD099E16F3B4B7828CC2DA /* HappymodeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4641BF3033696CA87BECCD7A /* HappymodeApp.swift */; };
-			E1A1B2C3D4E5F60718293A4B /* SolarPackage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A1B2C3D4E5F60718293A4B /* SolarPackage.swift */; };
-			F1A2B3C4D5E6F78901234567 /* StatusItemController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* StatusItemController.swift */; };
+		0287722DE211E09938FC198F /* ThemeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2A4DDCAF699250D5EF6012D /* ThemeController.swift */; };
+		2AF7C7AB3D7B7484E90E4BE3 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CFBF5AC0ED953AF3BBB168C1 /* Cocoa.framework */; };
+		39282ECC26B57104EA10FA07 /* SolarCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E24B77649F24352D1540B80 /* SolarCalculator.swift */; };
+		432B7EEC6E4E024BF6E00BF1 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05DF75CBE1DB50C10F66E6AC /* MenuBarView.swift */; };
+		5D5FA8F017267C5A5A4E8F91 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64CA2B496F1DB06899315924 /* SettingsView.swift */; };
+		80E107762F6C668AEB00D896 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 58CBF4DB865C20A8A7F54B1F /* Assets.xcassets */; };
+		A1AD099E16F3B4B7828CC2DA /* HappymodeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4641BF3033696CA87BECCD7A /* HappymodeApp.swift */; };
+		DB8B0E0990343A13BC9AE7EF /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = A6D0E2E5D2839BF2A87424E5 /* KeyboardShortcuts */; };
+		E1A1B2C3D4E5F60718293A4B /* SolarPackage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A1B2C3D4E5F60718293A4B /* SolarPackage.swift */; };
+		F1A2B3C4D5E6F78901234567 /* StatusItemController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* StatusItemController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,22 +24,23 @@
 		0AE310D49E3691443537A7C3 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0C92B588378E80BF1BB0A49F /* happymode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = happymode.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4641BF3033696CA87BECCD7A /* HappymodeApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HappymodeApp.swift; sourceTree = "<group>"; };
-			58CBF4DB865C20A8A7F54B1F /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-			64CA2B496F1DB06899315924 /* SettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-			8E24B77649F24352D1540B80 /* SolarCalculator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SolarCalculator.swift; sourceTree = "<group>"; };
-			B2A4DDCAF699250D5EF6012D /* ThemeController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ThemeController.swift; sourceTree = "<group>"; };
-			CFBF5AC0ED953AF3BBB168C1 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
-			D1A1B2C3D4E5F60718293A4B /* SolarPackage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SolarPackage.swift; sourceTree = "<group>"; };
-			A1B2C3D4E5F6A7B8C9D0E1F2 /* StatusItemController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StatusItemController.swift; sourceTree = "<group>"; };
+		58CBF4DB865C20A8A7F54B1F /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		64CA2B496F1DB06899315924 /* SettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		8E24B77649F24352D1540B80 /* SolarCalculator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SolarCalculator.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* StatusItemController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StatusItemController.swift; sourceTree = "<group>"; };
+		B2A4DDCAF699250D5EF6012D /* ThemeController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ThemeController.swift; sourceTree = "<group>"; };
+		CFBF5AC0ED953AF3BBB168C1 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		D1A1B2C3D4E5F60718293A4B /* SolarPackage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SolarPackage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A9806E556D9AE522C8CF141F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
-				files = (
-					2AF7C7AB3D7B7484E90E4BE3 /* Cocoa.framework in Frameworks */,
-				);
+			files = (
+				2AF7C7AB3D7B7484E90E4BE3 /* Cocoa.framework in Frameworks */,
+				DB8B0E0990343A13BC9AE7EF /* KeyboardShortcuts in Frameworks */,
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -177,16 +179,17 @@
 				A9806E556D9AE522C8CF141F /* Frameworks */,
 				2E9AE55E57B94AAE577404FE /* Resources */,
 			);
-				buildRules = (
-				);
-				dependencies = (
-				);
-				name = happymode;
-				packageProductDependencies = (
-				);
-				productName = happymode;
-				productReference = 0C92B588378E80BF1BB0A49F /* happymode.app */;
-				productType = "com.apple.product-type.application";
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = happymode;
+			packageProductDependencies = (
+				A6D0E2E5D2839BF2A87424E5 /* KeyboardShortcuts */,
+			);
+			productName = happymode;
+			productReference = 0C92B588378E80BF1BB0A49F /* happymode.app */;
+			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
@@ -205,12 +208,13 @@
 				en,
 				Base,
 			);
-				mainGroup = 2E38997761EEBBB1E0E0637C;
-				minimizedProjectReferenceProxies = 0;
-				packageReferences = (
-				);
-				preferredProjectObjectVersion = 77;
-				productRefGroup = E86F8D70F2AF1D1816B9505F /* Products */;
+			mainGroup = 2E38997761EEBBB1E0E0637C;
+			minimizedProjectReferenceProxies = 0;
+			packageReferences = (
+				3B177994D2BCA13EF6D88A2C /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = E86F8D70F2AF1D1816B9505F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -236,16 +240,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1AD099E16F3B4B7828CC2DA /* HappymodeApp.swift in Sources */,
-					432B7EEC6E4E024BF6E00BF1 /* MenuBarView.swift in Sources */,
-					5D5FA8F017267C5A5A4E8F91 /* SettingsView.swift in Sources */,
-					0287722DE211E09938FC198F /* ThemeController.swift in Sources */,
-					39282ECC26B57104EA10FA07 /* SolarCalculator.swift in Sources */,
-					E1A1B2C3D4E5F60718293A4B /* SolarPackage.swift in Sources */,
-					F1A2B3C4D5E6F78901234567 /* StatusItemController.swift in Sources */,
-				);
-				runOnlyForDeploymentPostprocessing = 0;
-			};
-	/* End PBXSourcesBuildPhase section */
+				432B7EEC6E4E024BF6E00BF1 /* MenuBarView.swift in Sources */,
+				5D5FA8F017267C5A5A4E8F91 /* SettingsView.swift in Sources */,
+				0287722DE211E09938FC198F /* ThemeController.swift in Sources */,
+				39282ECC26B57104EA10FA07 /* SolarCalculator.swift in Sources */,
+				E1A1B2C3D4E5F60718293A4B /* SolarPackage.swift in Sources */,
+				F1A2B3C4D5E6F78901234567 /* StatusItemController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
 		1885264D9AA0872B503D46D6 /* Release */ = {
@@ -426,6 +430,24 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		3B177994D2BCA13EF6D88A2C /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.0;
+			};
 		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A6D0E2E5D2839BF2A87424E5 /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3B177994D2BCA13EF6D88A2C /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
+			productName = KeyboardShortcuts;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
 	rootObject = 591C789A6274195F00C14E52 /* Project object */;
 }

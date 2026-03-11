@@ -9,6 +9,7 @@ enum AppearancePreference: String, CaseIterable, Identifiable {
     case forceDark
 
     static let menuOrder: [AppearancePreference] = [.forceDark, .automatic, .forceLight]
+    static let shortcutCycleOrder: [AppearancePreference] = [.automatic, .forceLight, .forceDark]
 
     var id: String {
         rawValue
@@ -34,6 +35,19 @@ enum AppearancePreference: String, CaseIterable, Identifiable {
         case .forceDark:
             return "moon.fill"
         }
+    }
+
+    var nextShortcutCycleValue: AppearancePreference {
+        guard let currentIndex = Self.shortcutCycleOrder.firstIndex(of: self) else {
+            return .automatic
+        }
+
+        let nextIndex = Self.shortcutCycleOrder.index(after: currentIndex)
+        if nextIndex == Self.shortcutCycleOrder.endIndex {
+            return Self.shortcutCycleOrder[Self.shortcutCycleOrder.startIndex]
+        }
+
+        return Self.shortcutCycleOrder[nextIndex]
     }
 }
 

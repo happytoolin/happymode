@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.7] - 2026-03-12
+
+### Added
+
+- User-configurable global keyboard shortcut support for cycling `Auto -> Light -> Dark -> Auto`.
+- Keyboard shortcut recorder UI in General settings, including explicit shortcut removal and conflict guidance.
+
+### Changed
+
+- Updated app bundle version metadata to `CFBundleShortVersionString = 0.0.7` and `CFBundleVersion = 7`.
+
 ## [0.0.6] - 2026-03-01
 
 ### Fixed

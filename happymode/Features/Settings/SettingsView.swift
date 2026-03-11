@@ -1,4 +1,5 @@
 import AppKit
+import KeyboardShortcuts
 import SwiftUI
 
 // MARK: - Shared helpers
@@ -24,6 +25,7 @@ struct GeneralSettingsPane: View {
 
     @State private var showLaunchAtLoginErrorAlert = false
     @State private var launchAtLoginErrorMessage = ""
+    @State private var shortcutAssigned = KeyboardShortcuts.getShortcut(for: .cycleAppearanceMode) != nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -69,6 +71,38 @@ struct GeneralSettingsPane: View {
             Divider()
 
             VStack(alignment: .leading, spacing: 10) {
+                SectionHeader(title: "Keyboard Shortcut")
+
+                HStack {
+                    Text("Cycle mode")
+                    Spacer()
+                    KeyboardShortcuts.Recorder(for: .cycleAppearanceMode) { shortcut in
+                        shortcutAssigned = shortcut != nil
+                    }
+                }
+
+                Text("Cycles Auto, Light, and Dark from anywhere.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                HStack {
+                    Button("Remove Shortcut") {
+                        KeyboardShortcuts.setShortcut(nil, for: .cycleAppearanceMode)
+                        shortcutAssigned = false
+                    }
+                    .disabled(!shortcutAssigned)
+
+                    Spacer()
+                }
+
+                Text("If the recorder warns about a conflict, choose a different shortcut instead of overriding existing menu or system shortcuts.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 10) {
                 SectionHeader(title: "Startup")
 
                 Toggle(
@@ -104,7 +138,10 @@ struct GeneralSettingsPane: View {
         .padding(20)
         .frame(width: paneWidth, alignment: .leading)
         .frame(maxHeight: .infinity, alignment: .top)
-        .onAppear { launchAtLoginController.refresh() }
+        .onAppear {
+            shortcutAssigned = KeyboardShortcuts.getShortcut(for: .cycleAppearanceMode) != nil
+            launchAtLoginController.refresh()
+        }
         .alert("Unable to Update Login Item", isPresented: $showLaunchAtLoginErrorAlert) {
             Button("OK") {}
         } message: {
@@ -326,11 +363,11 @@ struct AboutSettingsPane: View {
     }
 
     private var appVersion: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.6"
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.7"
     }
 
     private var appBuild: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "6"
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "7"
     }
 
     var body: some View {

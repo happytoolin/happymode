@@ -1,7 +1,12 @@
 import AppKit
 import Combine
+import KeyboardShortcuts
 import ServiceManagement
 import SwiftUI
+
+extension KeyboardShortcuts.Name {
+    static let cycleAppearanceMode = Self("cycleAppearanceMode")
+}
 
 @MainActor
 final class StatusItemController: NSObject, ObservableObject {
@@ -16,6 +21,9 @@ final class StatusItemController: NSObject, ObservableObject {
 
     override init() {
         super.init()
+        KeyboardShortcuts.onKeyUp(for: .cycleAppearanceMode) { [weak self] in
+            self?.cycleAppearancePreference()
+        }
         setupStatusItem()
         setupPopover()
         observeChanges()
@@ -109,6 +117,10 @@ final class StatusItemController: NSObject, ObservableObject {
     @objc private func setAppearance(_ sender: NSMenuItem) {
         guard let pref = sender.representedObject as? AppearancePreference else { return }
         controller.appearancePreference = pref
+    }
+
+    private func cycleAppearancePreference() {
+        controller.appearancePreference = controller.appearancePreference.nextShortcutCycleValue
     }
 
     @objc private func openSettings() {

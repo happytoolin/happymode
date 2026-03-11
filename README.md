@@ -18,6 +18,7 @@ Native macOS menu bar app that controls Light/Dark appearance based on sunrise/s
   - `Custom times` (user-defined daily switch times).
 - Weekly preview of sunrise/sunset times, including polar night and midnight sun indicators.
 - Optional countdown in menu bar for time remaining to next transition.
+- Optional user-configurable global keyboard shortcut to cycle `Auto`, `Light`, and `Dark`.
 - Local solar calculations (no external API calls).
 - Automatic update checking (once daily) with manual "Check for Updates" option.
 - Native macOS login item integration with System Settings approval flow.
@@ -71,11 +72,18 @@ xattr -dr com.apple.quarantine "/Applications/happymode.app"
 
 Open `Settings…` to configure:
 
-- **General**: Theme picker, menu bar countdown toggle, startup at login.
+- **General**: Theme picker, menu bar countdown toggle, global mode shortcut recorder, startup at login.
 - **Schedule**: Choose between sunrise/sunset or custom times, view weekly preview.
 - **Location**: Automatic location detection or manual latitude/longitude coordinates.
 - **Permissions**: Grant Location and Automation permissions with quick links to System Settings.
 - **About**: App version, GitHub repository, website, and update check button.
+
+### Global Shortcut
+
+- Set a shortcut in `Settings… -> General -> Keyboard Shortcut`.
+- The shortcut is global and cycles `Auto -> Light -> Dark -> Auto`.
+- New installs do not claim a default shortcut; choose one that does not conflict with your existing system or app shortcuts.
+- Use `Remove Shortcut` in settings to clear it completely.
 
 ### Initial Setup
 
@@ -135,8 +143,8 @@ Releases are automated with GitHub Actions on version tags (`v*`).
 2. Tag and push:
 
 ```bash
-git tag v0.0.6
-git push origin v0.0.6
+git tag v0.0.7
+git push origin v0.0.7
 ```
 
 The release workflow publishes:
