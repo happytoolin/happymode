@@ -3,7 +3,7 @@
 Place PNG screenshots in this folder for `README.md`:
 
 - `menu.png`: menu bar popover open, showing mode and controls.
-- `general-settings.png`: General settings window with startup and appearance options.
+- `general-settings.png`: General settings window with appearance, menu bar, keyboard shortcut, and startup options.
 - `schedule-settings.png`: Schedule settings with sunrise/sunset and custom times options.
 - `permissions-settings.png`: Permissions and location settings sections visible.
 

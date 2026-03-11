@@ -97,7 +97,7 @@ Open `Settings…` to configure:
 ## Screenshots
 
 ![Menu bar](docs/screenshots/menu.png)
-![General settings](docs/screenshots/general-settings.png)
+![General settings with keyboard shortcut](docs/screenshots/general-settings.png)
 ![Schedule settings](docs/screenshots/schedule-settings.png)
 ![Permissions settings](docs/screenshots/permissions-settings.png)
 
