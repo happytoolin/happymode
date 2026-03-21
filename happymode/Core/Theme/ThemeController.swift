@@ -532,18 +532,23 @@ final class ThemeController: NSObject, ObservableObject {
     private static let showRemainingTimeInMenuBarKey = "showRemainingTimeInMenuBar"
     private static let cachedLatitudeKey = "cachedDetectedLatitude"
     private static let cachedLongitudeKey = "cachedDetectedLongitude"
+    private static let cachedLocationTimestampKey = "cachedDetectedLocationTimestamp"
 
     private static let defaultCustomLightMinutes = 7 * 60
     private static let defaultCustomDarkMinutes = 19 * 60
+    private static let cachedLocationMaxAge: TimeInterval = 60 * 60 * 24
 
     private let defaults = UserDefaults.standard
     private let locationManager = CLLocationManager()
     private var latestCoordinate: CLLocationCoordinate2D?
     private var scheduledRefreshTask: Task<Void, Never>?
     private var menuBarCountdownTask: Task<Void, Never>?
+    private var automationProbeTask: Task<Void, Never>?
+    private var appearanceApplyTask: Task<Void, Never>?
     private var lastLocationRequestDate: Date?
     private var isBatchUpdatingManualCoordinates = false
     private var staleTransitionRetryCount = 0
+    private var pendingAppearanceTarget: Bool?
 
     private var missingSetupLabels: [String] {
         var missing: [String] = []
@@ -602,6 +607,8 @@ final class ThemeController: NSObject, ObservableObject {
 
         if let cachedLat = defaults.object(forKey: Self.cachedLatitudeKey) as? Double,
            let cachedLon = defaults.object(forKey: Self.cachedLongitudeKey) as? Double,
+           let cachedTimestamp = defaults.object(forKey: Self.cachedLocationTimestampKey) as? Date,
+           Self.cachedCoordinateIsFresh(timestamp: cachedTimestamp, now: Date()),
            (-90 ... 90).contains(cachedLat),
            (-180 ... 180).contains(cachedLon) {
             latestCoordinate = CLLocationCoordinate2D(latitude: cachedLat, longitude: cachedLon)
@@ -626,6 +633,34 @@ final class ThemeController: NSObject, ObservableObject {
             object: nil
         )
 
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(systemClockDidChange),
+            name: .NSSystemClockDidChange,
+            object: nil
+        )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(systemTimeZoneDidChange),
+            name: .NSSystemTimeZoneDidChange,
+            object: nil
+        )
+
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(systemDidWake),
+            name: NSWorkspace.didWakeNotification,
+            object: nil
+        )
+
+        DistributedNotificationCenter.default().addObserver(
+            self,
+            selector: #selector(systemAppearanceChanged),
+            name: Notification.Name("AppleInterfaceThemeChangedNotification"),
+            object: nil
+        )
+
         probeAndUpdateAutomationPermission()
         refreshNow(forceLocation: true)
     }
@@ -633,22 +668,102 @@ final class ThemeController: NSObject, ObservableObject {
     deinit {
         scheduledRefreshTask?.cancel()
         menuBarCountdownTask?.cancel()
+        automationProbeTask?.cancel()
+        appearanceApplyTask?.cancel()
+        NotificationCenter.default.removeObserver(self)
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
+        DistributedNotificationCenter.default().removeObserver(self)
     }
 
-    @objc private func calendarDayChanged() {
+    @objc nonisolated private func calendarDayChanged() {
+        Task { @MainActor [weak self] in
+            self?.handleCalendarDayChanged()
+        }
+    }
+
+    @MainActor
+    private func handleCalendarDayChanged() {
         refreshNow(forceLocation: true)
     }
 
-    @objc private func appDidBecomeActive() {
+    @objc nonisolated private func appDidBecomeActive() {
+        Task { @MainActor [weak self] in
+            self?.handleAppDidBecomeActive()
+        }
+    }
+
+    @MainActor
+    private func handleAppDidBecomeActive() {
         probeAndUpdateAutomationPermission()
         refreshNow(forceLocation: false)
     }
 
+    @objc nonisolated private func systemDidWake() {
+        Task { @MainActor [weak self] in
+            self?.handleSystemDidWake()
+        }
+    }
+
+    @MainActor
+    private func handleSystemDidWake() {
+        refreshNow(forceLocation: true)
+    }
+
+    @objc nonisolated private func systemClockDidChange() {
+        Task { @MainActor [weak self] in
+            self?.handleSystemClockDidChange()
+        }
+    }
+
+    @MainActor
+    private func handleSystemClockDidChange() {
+        refreshNow(forceLocation: true)
+    }
+
+    @objc nonisolated private func systemTimeZoneDidChange() {
+        Task { @MainActor [weak self] in
+            self?.handleSystemTimeZoneDidChange()
+        }
+    }
+
+    @MainActor
+    private func handleSystemTimeZoneDidChange() {
+        refreshNow(forceLocation: true)
+    }
+
+    @objc nonisolated private func systemAppearanceChanged() {
+        Task { @MainActor [weak self] in
+            self?.handleSystemAppearanceChanged()
+        }
+    }
+
+    @MainActor
+    private func handleSystemAppearanceChanged() {
+        pendingAppearanceTarget = nil
+        refreshNow(forceLocation: false)
+    }
+
     private func probeAndUpdateAutomationPermission() {
-        let granted = Self.probeAutomationPermission()
-        automationPermissionKnown = true
-        automationPermissionGranted = granted
-        if granted { errorText = nil }
+        if automationProbeTask != nil {
+            return
+        }
+
+        automationProbeTask = Task { [weak self] in
+            let granted = await Self.probeAutomationPermission()
+
+            await MainActor.run {
+                guard let self else {
+                    return
+                }
+
+                self.automationProbeTask = nil
+                self.automationPermissionKnown = true
+                self.automationPermissionGranted = granted
+                if granted {
+                    self.errorText = nil
+                }
+            }
+        }
     }
 
     func requestLocationPermission() {
@@ -993,6 +1108,7 @@ final class ThemeController: NSObject, ObservableObject {
 
     private func applyAppearanceIfNeeded(darkMode: Bool) {
         guard darkMode != Self.systemIsCurrentlyDarkMode() else {
+            pendingAppearanceTarget = nil
             if !automationPermissionKnown {
                 probeAndUpdateAutomationPermission()
             }
@@ -1000,18 +1116,38 @@ final class ThemeController: NSObject, ObservableObject {
             return
         }
 
-        if Self.setSystemDarkMode(darkMode) {
-            automationPermissionKnown = true
-            automationPermissionGranted = true
-            errorText = nil
-        } else {
-            automationPermissionKnown = true
-            automationPermissionGranted = false
-            errorText = "Could not change appearance. Grant Automation permission for System Events."
+        if pendingAppearanceTarget == darkMode {
+            return
+        }
+
+        pendingAppearanceTarget = darkMode
+        appearanceApplyTask?.cancel()
+        appearanceApplyTask = Task { [weak self] in
+            let succeeded = await Self.setSystemDarkMode(darkMode)
+
+            await MainActor.run {
+                guard let self else {
+                    return
+                }
+
+                guard self.pendingAppearanceTarget == darkMode else {
+                    return
+                }
+
+                self.pendingAppearanceTarget = nil
+                self.automationPermissionKnown = true
+                self.automationPermissionGranted = succeeded
+
+                if succeeded {
+                    self.errorText = nil
+                } else {
+                    self.errorText = "Could not change appearance. Grant Automation permission for System Events."
+                }
+            }
         }
     }
 
-    private static func probeAutomationPermission() -> Bool {
+    private static func probeAutomationPermission() async -> Bool {
         let scriptSource = """
         tell application "System Events"
             tell appearance preferences
@@ -1020,16 +1156,10 @@ final class ThemeController: NSObject, ObservableObject {
         end tell
         """
 
-        guard let script = NSAppleScript(source: scriptSource) else {
-            return false
-        }
-
-        var error: NSDictionary?
-        _ = script.executeAndReturnError(&error)
-        return error == nil
+        return await runAppleScript(scriptSource)
     }
 
-    private static func setSystemDarkMode(_ enabled: Bool) -> Bool {
+    private static func setSystemDarkMode(_ enabled: Bool) async -> Bool {
         let scriptSource = """
         tell application "System Events"
             tell appearance preferences
@@ -1038,17 +1168,12 @@ final class ThemeController: NSObject, ObservableObject {
         end tell
         """
 
-        guard let script = NSAppleScript(source: scriptSource) else {
-            return false
-        }
-
-        var error: NSDictionary?
-        script.executeAndReturnError(&error)
-        return error == nil
+        return await runAppleScript(scriptSource)
     }
 
     private static func systemIsCurrentlyDarkMode() -> Bool {
-        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let globalDefaults = UserDefaults.standard.persistentDomain(forName: UserDefaults.globalDomain)
+        return (globalDefaults?["AppleInterfaceStyle"] as? String) == "Dark"
     }
 
     private static func minutesSinceMidnight(for date: Date, calendar: Calendar = .current) -> Int {
@@ -1087,32 +1212,108 @@ final class ThemeController: NSObject, ObservableObject {
 
         return nil
     }
+
+    static func cachedCoordinateIsFresh(timestamp: Date,
+                                        now: Date,
+                                        maxAge: TimeInterval = 60 * 60 * 24) -> Bool {
+        let age = now.timeIntervalSince(timestamp)
+        return age >= 0 && age <= maxAge
+    }
+
+    private static func runAppleScript(_ source: String,
+                                       timeout: TimeInterval = 5) async -> Bool {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        process.arguments = appleScriptArguments(for: source)
+        process.standardOutput = Pipe()
+        process.standardError = Pipe()
+
+        do {
+            try process.run()
+        } catch {
+            return false
+        }
+
+        return await withTaskGroup(of: Bool.self) { group in
+            group.addTask {
+                process.waitUntilExit()
+                return process.terminationStatus == 0
+            }
+
+            group.addTask {
+                let timeoutNanoseconds = UInt64(max(0, timeout) * 1_000_000_000)
+                try? await Task.sleep(nanoseconds: timeoutNanoseconds)
+                if process.isRunning {
+                    process.terminate()
+                }
+                return false
+            }
+
+            let result = await group.next() ?? false
+            group.cancelAll()
+            return result
+        }
+    }
+
+    private static func appleScriptArguments(for source: String) -> [String] {
+        source
+            .split(whereSeparator: \.isNewline)
+            .map(String.init)
+            .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            .flatMap { ["-e", $0] }
+    }
 }
 
 @MainActor
-extension ThemeController: @preconcurrency CLLocationManagerDelegate {
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        locationAuthorizationStatus = manager.authorizationStatus
+extension ThemeController: CLLocationManagerDelegate {
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        let status = manager.authorizationStatus
+
+        Task { @MainActor [weak self] in
+            self?.handleLocationAuthorizationChange(status)
+        }
+    }
+
+    @MainActor
+    private func handleLocationAuthorizationChange(_ status: CLAuthorizationStatus) {
+        locationAuthorizationStatus = status
 
         if requiresLocationForActiveSchedule,
-           manager.authorizationStatus == .authorized || manager.authorizationStatus == .authorizedAlways {
-            manager.requestLocation()
+           status == .authorized || status == .authorizedAlways {
+            locationManager.requestLocation()
         }
 
         refreshNow(forceLocation: false)
     }
 
-    func locationManager(_: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        if let latest = locations.last?.coordinate {
-            latestCoordinate = latest
-            defaults.set(latest.latitude, forKey: Self.cachedLatitudeKey)
-            defaults.set(latest.longitude, forKey: Self.cachedLongitudeKey)
+    nonisolated func locationManager(_: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        let latest = locations.last?.coordinate
+
+        Task { @MainActor [weak self] in
+            self?.handleLocationUpdate(latest)
+        }
+    }
+
+    @MainActor
+    private func handleLocationUpdate(_ coordinate: CLLocationCoordinate2D?) {
+        if let coordinate {
+            latestCoordinate = coordinate
+            defaults.set(coordinate.latitude, forKey: Self.cachedLatitudeKey)
+            defaults.set(coordinate.longitude, forKey: Self.cachedLongitudeKey)
+            defaults.set(Date(), forKey: Self.cachedLocationTimestampKey)
             errorText = nil
             refreshNow(forceLocation: false)
         }
     }
 
-    func locationManager(_: CLLocationManager, didFailWithError _: Error) {
+    nonisolated func locationManager(_: CLLocationManager, didFailWithError _: Error) {
+        Task { @MainActor [weak self] in
+            self?.handleLocationFailure()
+        }
+    }
+
+    @MainActor
+    private func handleLocationFailure() {
         if !requiresLocationForActiveSchedule {
             locationStatusText = "Location unavailable (not required in current mode)."
             return
