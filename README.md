@@ -143,8 +143,8 @@ Releases are automated with GitHub Actions on version tags (`v*`).
 2. Tag and push:
 
 ```bash
-git tag v0.0.7
-git push origin v0.0.7
+git tag v0.0.8
+git push origin v0.0.8
 ```
 
 The release workflow publishes:

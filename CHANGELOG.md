@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.8] - 2026-03-21
+
+### Fixed
+
+- Prevented timed-out appearance AppleScripts from lingering in the background and blocking later automation checks or theme changes.
+- Rejected future-dated cached location timestamps so stale coordinates are not reused after system clock corrections.
+
+### Changed
+
+- Updated app bundle version metadata to `CFBundleShortVersionString = 0.0.8` and `CFBundleVersion = 8`.
+
 ## [0.0.7] - 2026-03-12
 
 ### Added
